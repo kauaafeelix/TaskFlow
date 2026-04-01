@@ -1,0 +1,134 @@
+package kaua.felix.taskflow.domain.entity;
+
+import kaua.felix.taskflow.domain.entity.enuns.TaskStatus;
+import kaua.felix.taskflow.domain.entity.enuns.TypePriority;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+public class Task {
+
+    private final UUID id;
+    private final UUID projectId;
+    private String title;
+    private String description;
+    private TaskStatus status;
+    private TypePriority priority;
+    private LocalDate deadline;
+    private User assignee;
+    private final List<Comment> comments;
+    private final LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    public Task(UUID id, UUID projectId, String title, String description,
+                TaskStatus status, TypePriority priority, LocalDate deadline,
+                User assignee, List<Comment> comments,
+                LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.projectId = projectId;
+        this.title = title;
+        this.description = description;
+        this.status = status;
+        this.priority = priority;
+        this.deadline = deadline;
+        this.assignee = assignee;
+        this.comments = new ArrayList<>(comments);
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+        public static Task create(UUID projectId, String title, String description,
+                                TypePriority priority, LocalDate deadline, User assignee) {
+            if (title == null || title.isBlank()) {
+                throw new RuntimeException("O título da tarefa não pode ser vazio");
+            }
+            if (deadline != null && deadline.isBefore(LocalDate.now())) {
+                throw new RuntimeException("A data de vencimento não pode ser no passado");
+            }
+            LocalDateTime now = LocalDateTime.now();
+            return new Task(UUID.randomUUID(), projectId, title, description,
+                    TaskStatus.TODO, priority, deadline, assignee,
+                    new ArrayList<>(), now, now);
+        }
+
+        public void update(String title, String description, TaskStatus status,
+                            TypePriority priority, LocalDate deadline,
+                            User assignee) {
+            if (title == null || title.isBlank()) {
+                throw new RuntimeException("O título da tarefa não pode ser vazio");
+            }
+            if (this.status == TaskStatus.DONE || this.status == TaskStatus.CANCELLED) {
+                throw new RuntimeException("Não é possível editar uma tarefa finalizada");
+            }
+            this.title = title;
+            this.description = description;
+            this.status = status;
+            this.priority = priority;
+            this.deadline = deadline;
+        }
+
+        public void changeStatus(TaskStatus newStatus) {
+            validateStatusTransition(this.status, newStatus);
+
+            this.status = newStatus;
+            this.updatedAt = LocalDateTime.now();
+
+        }
+
+        public void assign (User user){
+
+            if (this.status == TaskStatus.DONE || this.status == TaskStatus.CANCELLED) {
+                throw new RuntimeException("Não é possível atribuir uma tarefa finalizada");
+            }
+            this.assignee = user;
+            this.updatedAt = LocalDateTime.now();
+        }
+
+        public void unassign (){
+            this.assignee = null;
+            this.updatedAt = LocalDateTime.now();
+        }
+
+        public Comment addComment (User author, String content){
+            Comment comment = Comment.create(this.id, author, content);
+            this.comments.add(comment);
+            this.updatedAt = LocalDateTime.now();
+            return comment;
+        }
+
+        public void removeComment (UUID commentId, UUID requesterId){
+            Comment comment = comments.stream()
+                    .filter(c -> c.getId().equals(commentId))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Comentário não encontrado"));
+
+            if (!comment.getAuthor().getId().equals(requesterId)) {
+                throw new RuntimeException("Apenas o autor do comentário pode removê-lo");
+            }
+            comments.remove(comment);
+            this.updatedAt = LocalDateTime.now();
+        }
+
+        public boolean isOverdue(){
+            return deadline != null
+                    && LocalDateTime.now().isAfter(deadline.atStartOfDay())
+                    && status != TaskStatus.DONE
+                    && status != TaskStatus.CANCELLED;
+        }
+
+    private void validateStatusTransition(TaskStatus current, TaskStatus next) {
+        boolean valid = switch (current) {
+            case TODO        -> next == TaskStatus.IN_PROGRESS || next == TaskStatus.CANCELLED;
+            case IN_PROGRESS -> next == TaskStatus.IN_REVIEW || next == TaskStatus.TODO || next == TaskStatus.CANCELLED;
+            case IN_REVIEW   -> next == TaskStatus.DONE || next == TaskStatus.IN_PROGRESS;
+            case DONE        -> false;
+            case CANCELLED   -> false;
+        };
+        if (!valid)
+            throw new RuntimeException("Transição de status inválida: " + current + " -> " + next);
+    }
+
+}
