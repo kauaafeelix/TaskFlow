@@ -40,8 +40,14 @@ public class Task {
         this.updatedAt = updatedAt;
     }
 
-        public static Task create(UUID projectId, String title, String description,
-                                TypePriority priority, LocalDate deadline, User assignee) {
+    public Task(UUID projectId, String title, String description) {
+        this.projectId = projectId;
+        this.title = title;
+        this.description = description;
+    }
+
+    public static Task create(UUID projectId, String title, String description,
+                              TypePriority priority, LocalDate deadline, User assignee) {
             if (title == null || title.isBlank()) {
                 throw new RuntimeException("O título da tarefa não pode ser vazio");
             }
@@ -124,11 +130,81 @@ public class Task {
             case TODO        -> next == TaskStatus.IN_PROGRESS || next == TaskStatus.CANCELLED;
             case IN_PROGRESS -> next == TaskStatus.IN_REVIEW || next == TaskStatus.TODO || next == TaskStatus.CANCELLED;
             case IN_REVIEW   -> next == TaskStatus.DONE || next == TaskStatus.IN_PROGRESS;
-            case DONE        -> false;
-            case CANCELLED   -> false;
+            case DONE, CANCELLED -> false;
         };
         if (!valid)
             throw new RuntimeException("Transição de status inválida: " + current + " -> " + next);
     }
 
+    public UUID getId() {
+        return id;
+    }
+
+    public UUID getProjectId() {
+        return projectId;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public TaskStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TaskStatus status) {
+        this.status = status;
+    }
+
+    public TypePriority getPriority() {
+        return priority;
+    }
+
+    public void setPriority(TypePriority priority) {
+        this.priority = priority;
+    }
+
+    public LocalDate getDeadline() {
+        return deadline;
+    }
+
+    public void setDeadline(LocalDate deadline) {
+        this.deadline = deadline;
+    }
+
+    public User getAssignee() {
+        return assignee;
+    }
+
+    public void setAssignee(User assignee) {
+        this.assignee = assignee;
+    }
+
+    public List<Comment> getComments() {
+        return comments;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }
