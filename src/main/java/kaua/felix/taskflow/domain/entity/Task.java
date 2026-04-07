@@ -40,10 +40,13 @@ public class Task {
         this.updatedAt = updatedAt;
     }
 
-    public Task(UUID projectId, String title, String description) {
+    public Task(UUID id, UUID projectId, String title, String description, List<Comment> comments, LocalDateTime createdAt) {
+        this.id = id;
         this.projectId = projectId;
         this.title = title;
         this.description = description;
+        this.comments = comments;
+        this.createdAt = createdAt;
     }
 
     public static Task create(UUID projectId, String title, String description,
@@ -61,8 +64,8 @@ public class Task {
         }
 
         public void update(String title, String description, TaskStatus status,
-                            TypePriority priority, LocalDate deadline,
-                            User assignee) {
+                            TypePriority priority, LocalDate deadline
+                            ) {
             if (title == null || title.isBlank()) {
                 throw new RuntimeException("O título da tarefa não pode ser vazio");
             }
