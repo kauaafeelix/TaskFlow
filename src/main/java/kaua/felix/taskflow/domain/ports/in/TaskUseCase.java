@@ -13,7 +13,7 @@ public interface TaskUseCase {
     Task create (UUID projectId, String title, String description, TypePriority priority,
                  LocalDate deadline, UUID assigneeId, UUID requesterId);
 
-    Task update (UUID taskId, String title, String description,
+    Task update (UUID taskId, String title, String description, TaskStatus status,
                  TypePriority priority, LocalDate deadline, UUID requesterId);
 
     Task changeStatus (UUID taskId, TaskStatus newStatus, UUID requesterId);
