@@ -1,6 +1,8 @@
 package kaua.felix.taskflow.domain.service;
 
+import kaua.felix.taskflow.domain.entity.Project;
 import kaua.felix.taskflow.domain.entity.Task;
+import kaua.felix.taskflow.domain.entity.User;
 import kaua.felix.taskflow.domain.entity.enuns.TaskStatus;
 import kaua.felix.taskflow.domain.entity.enuns.TypePriority;
 import kaua.felix.taskflow.domain.ports.in.TaskUseCase;
@@ -25,12 +27,51 @@ public class TaskService implements TaskUseCase {
 
     @Override
     public Task create(UUID projectId, String title, String description, TypePriority priority, LocalDate deadline, UUID assigneeId, UUID requesterId) {
-        return null;
+
+        Project project = projectRepositoryPort.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+
+        if (!project.isMember(requesterId)) {
+            throw new RuntimeException("Requester is not a member of the project");
+        }
+
+        if (!project.canEdit(requesterId)){
+            throw new RuntimeException("Requester does not have permission to create tasks in this project");
+        }
+
+        User assignee = null;
+
+        if (assigneeId != null){
+            assignee = userRepositoryPort.findById(assigneeId)
+                    .orElseThrow(() -> new RuntimeException("Assignee not found"));
+
+            if (!project.isMember(assigneeId)){
+                throw new RuntimeException("Assignee is not a member of the project");
+            }
+        }
+
+        Task task = Task.create(projectId, title, description, priority, deadline, assignee);
+
+        return taskRepositoryPort.save(task);
     }
 
     @Override
-    public Task update(UUID taskId, String title, String description, TypePriority priority, LocalDate deadline, UUID requesterId) {
-        return null;
+    public Task update(UUID taskId, String title, String description, TaskStatus status,
+                       TypePriority priority, LocalDate deadline, UUID requesterId) {
+
+        Task task = taskRepositoryPort.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        Project project = projectRepositoryPort.findById(task.getProjectId())
+                .orElseThrow(() -> new RuntimeException("Projeto não encontrado"));
+
+        if (!project.canEdit(requesterId)) {
+            throw new RuntimeException("Você não tem permissão para editar esta tarefa");
+        }
+
+        task.update(title, description, status, priority, deadline);
+
+        return taskRepositoryPort.save(task);
     }
 
     @Override
