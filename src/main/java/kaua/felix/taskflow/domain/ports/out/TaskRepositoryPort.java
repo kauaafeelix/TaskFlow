@@ -10,7 +10,7 @@ public interface TaskRepositoryPort {
 
     Task save (Task task);
 
-    Optional<Task> findById(Long id);
+    Optional<Task> findById(UUID id);
 
     List<Task> findByProjectId(UUID projectId);
 
