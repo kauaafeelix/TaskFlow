@@ -18,7 +18,7 @@ public interface TaskUseCase {
 
     Task changeStatus (UUID taskId, TaskStatus newStatus, UUID requesterId);
 
-    Task assign (UUID taksId, UUID assigneeId, UUID requesterId);
+    Task assign (UUID taskId, UUID assigneeId, UUID requesterId);
 
     Task findById (UUID taskId, UUID requesterId);
 
