@@ -52,10 +52,10 @@ public class Task {
     public static Task create(UUID projectId, String title, String description,
                               TypePriority priority, LocalDate deadline, User assignee) {
             if (title == null || title.isBlank()) {
-                throw new RuntimeException("O título da tarefa não pode ser vazio");
+                throw new RuntimeException("The task title cannot be empty.");
             }
             if (deadline != null && deadline.isBefore(LocalDate.now())) {
-                throw new RuntimeException("A data de vencimento não pode ser no passado");
+                throw new RuntimeException("The due date cannot be in the past.");
             }
             LocalDateTime now = LocalDateTime.now();
             return new Task(UUID.randomUUID(), projectId, title, description,
@@ -63,21 +63,17 @@ public class Task {
                     new ArrayList<>(), now, now);
         }
 
-        public void update(String title, String description, TaskStatus status,
-                            TypePriority priority, LocalDate deadline
-                            ) {
-            if (title == null || title.isBlank()) {
-                throw new RuntimeException("O título da tarefa não pode ser vazio");
-            }
-            if (this.status == TaskStatus.DONE || this.status == TaskStatus.CANCELLED) {
-                throw new RuntimeException("Não é possível editar uma tarefa finalizada");
-            }
-            this.title = title;
-            this.description = description;
-            this.status = status;
-            this.priority = priority;
-            this.deadline = deadline;
-        }
+    public void update(String title, String description, TypePriority priority, LocalDate deadline) {
+        if (title == null || title.isBlank())
+            throw new RuntimeException("The task title cannot be empty.");
+        if (this.status == TaskStatus.DONE || this.status == TaskStatus.CANCELLED)
+            throw new RuntimeException("It is not possible to edit a completed task.\n");
+        this.title = title;
+        this.description = description;
+        this.priority = priority;
+        this.deadline = deadline;
+        this.updatedAt = LocalDateTime.now();
+    }
 
         public void changeStatus(TaskStatus newStatus) {
             validateStatusTransition(this.status, newStatus);
