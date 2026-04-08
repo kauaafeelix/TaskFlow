@@ -56,46 +56,104 @@ public class TaskService implements TaskUseCase {
     }
 
     @Override
-    public Task update(UUID taskId, String title, String description, TaskStatus status,
+    public Task update(UUID taskId, String title, String description,
                        TypePriority priority, LocalDate deadline, UUID requesterId) {
 
         Task task = taskRepositoryPort.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
 
         Project project = projectRepositoryPort.findById(task.getProjectId())
-                .orElseThrow(() -> new RuntimeException("Projeto não encontrado"));
+                .orElseThrow(() -> new RuntimeException("Project not found"));
 
         if (!project.canEdit(requesterId)) {
-            throw new RuntimeException("Você não tem permissão para editar esta tarefa");
+            throw new RuntimeException("Requester does not have permission to create tasks in this project");
         }
 
-        task.update(title, description, status, priority, deadline);
+        task.update(title, description, priority, deadline);
 
         return taskRepositoryPort.save(task);
     }
 
     @Override
     public Task changeStatus(UUID taskId, TaskStatus newStatus, UUID requesterId) {
-        return null;
+
+        Task task = taskRepositoryPort.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+        Project project = projectRepositoryPort.findById(task.getProjectId())
+                .orElseThrow(()-> new RuntimeException("Project not found"));
+
+        if (!project.canEdit(requesterId)){
+            throw new RuntimeException("Requester does not have permission to edit tasks in this project");
+        }
+
+        task.changeStatus(newStatus);
+
+        return taskRepositoryPort.save(task);
     }
 
     @Override
-    public Task assign(UUID taksId, UUID assigneeId, UUID requesterId) {
-        return null;
+    public Task assign(UUID taskId, UUID assigneeId, UUID requesterId) {
+        Task task = taskRepositoryPort.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+        Project project = projectRepositoryPort.findById(task.getProjectId())
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+
+        if (!project.canEdit(requesterId)){
+            throw new RuntimeException("Requester does not have permission to edit tasks in this project");
+        }
+
+        User assignee = userRepositoryPort.findById(assigneeId)
+                .orElseThrow(()-> new RuntimeException("User not found"));
+
+        if (!project.isMember(assigneeId)){
+            throw new RuntimeException("User is not a member of the project.");
+        }
+
+        task.assign(assignee);
+
+        return taskRepositoryPort.save(task);
     }
 
     @Override
     public Task findById(UUID taskId, UUID requesterId) {
-        return null;
+
+        Task task = taskRepositoryPort.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+        Project project = projectRepositoryPort.findById(task.getProjectId())
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+
+        if (!project.isMember(requesterId)){
+            throw new RuntimeException("User is not a member of the project.");
+        }
+
+        return task;
     }
 
     @Override
     public List<Task> findByProjectId(UUID projectId, UUID requesterId) {
-        return List.of();
+
+        Project project = projectRepositoryPort.findById(projectId)
+                .orElseThrow(()-> new RuntimeException("Project not found"));
+
+        if (!project.isMember(requesterId)){
+            throw new RuntimeException("User is not a member of the project.");
+        }
+
+        return taskRepositoryPort.findByProjectId(projectId);
     }
 
     @Override
     public void delete(UUID taskId, UUID requesterId) {
+        Task task = taskRepositoryPort.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
 
+        Project project = projectRepositoryPort.findById(task.getProjectId())
+                        .orElseThrow(()-> new RuntimeException("Project not found"));
+
+        if (!project.canEdit(requesterId)){
+            throw new RuntimeException("You don't have permission to delete this task.");
+        }
+
+        taskRepositoryPort.delete(taskId);
     }
 }
