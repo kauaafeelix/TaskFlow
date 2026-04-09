@@ -40,13 +40,22 @@ public class Task {
         this.updatedAt = updatedAt;
     }
 
-        public static Task create(UUID projectId, String title, String description,
-                                TypePriority priority, LocalDate deadline, User assignee) {
+    public Task(UUID id, UUID projectId, String title, String description, List<Comment> comments, LocalDateTime createdAt) {
+        this.id = id;
+        this.projectId = projectId;
+        this.title = title;
+        this.description = description;
+        this.comments = comments;
+        this.createdAt = createdAt;
+    }
+
+    public static Task create(UUID projectId, String title, String description,
+                              TypePriority priority, LocalDate deadline, User assignee) {
             if (title == null || title.isBlank()) {
-                throw new RuntimeException("O título da tarefa não pode ser vazio");
+                throw new RuntimeException("The task title cannot be empty.");
             }
             if (deadline != null && deadline.isBefore(LocalDate.now())) {
-                throw new RuntimeException("A data de vencimento não pode ser no passado");
+                throw new RuntimeException("The due date cannot be in the past.");
             }
             LocalDateTime now = LocalDateTime.now();
             return new Task(UUID.randomUUID(), projectId, title, description,
@@ -54,21 +63,17 @@ public class Task {
                     new ArrayList<>(), now, now);
         }
 
-        public void update(String title, String description, TaskStatus status,
-                            TypePriority priority, LocalDate deadline,
-                            User assignee) {
-            if (title == null || title.isBlank()) {
-                throw new RuntimeException("O título da tarefa não pode ser vazio");
-            }
-            if (this.status == TaskStatus.DONE || this.status == TaskStatus.CANCELLED) {
-                throw new RuntimeException("Não é possível editar uma tarefa finalizada");
-            }
-            this.title = title;
-            this.description = description;
-            this.status = status;
-            this.priority = priority;
-            this.deadline = deadline;
-        }
+    public void update(String title, String description, TypePriority priority, LocalDate deadline) {
+        if (title == null || title.isBlank())
+            throw new RuntimeException("The task title cannot be empty.");
+        if (this.status == TaskStatus.DONE || this.status == TaskStatus.CANCELLED)
+            throw new RuntimeException("It is not possible to edit a completed task.\n");
+        this.title = title;
+        this.description = description;
+        this.priority = priority;
+        this.deadline = deadline;
+        this.updatedAt = LocalDateTime.now();
+    }
 
         public void changeStatus(TaskStatus newStatus) {
             validateStatusTransition(this.status, newStatus);
@@ -124,11 +129,81 @@ public class Task {
             case TODO        -> next == TaskStatus.IN_PROGRESS || next == TaskStatus.CANCELLED;
             case IN_PROGRESS -> next == TaskStatus.IN_REVIEW || next == TaskStatus.TODO || next == TaskStatus.CANCELLED;
             case IN_REVIEW   -> next == TaskStatus.DONE || next == TaskStatus.IN_PROGRESS;
-            case DONE        -> false;
-            case CANCELLED   -> false;
+            case DONE, CANCELLED -> false;
         };
         if (!valid)
             throw new RuntimeException("Transição de status inválida: " + current + " -> " + next);
     }
 
+    public UUID getId() {
+        return id;
+    }
+
+    public UUID getProjectId() {
+        return projectId;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public TaskStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TaskStatus status) {
+        this.status = status;
+    }
+
+    public TypePriority getPriority() {
+        return priority;
+    }
+
+    public void setPriority(TypePriority priority) {
+        this.priority = priority;
+    }
+
+    public LocalDate getDeadline() {
+        return deadline;
+    }
+
+    public void setDeadline(LocalDate deadline) {
+        this.deadline = deadline;
+    }
+
+    public User getAssignee() {
+        return assignee;
+    }
+
+    public void setAssignee(User assignee) {
+        this.assignee = assignee;
+    }
+
+    public List<Comment> getComments() {
+        return comments;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }
