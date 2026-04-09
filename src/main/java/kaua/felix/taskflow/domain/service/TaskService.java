@@ -123,7 +123,7 @@ public class TaskService implements TaskUseCase {
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
         if (!project.isMember(requesterId)){
-            throw new RuntimeException("User is not a member of the project.");
+            throw new RuntimeException("User is not a member of the project.    ");
         }
 
         return task;

@@ -10,15 +10,15 @@ public interface ProjectUseCase {
 
     Project create (String name, String description, UUID ownerId);
 
-    Project update (UUID projectId, String name, UUID ownerId);
+    Project update (UUID projectId, String name, String description, UUID requesterId);
 
-    Project addMember(UUID projectId, UUID userId, ProjectRole role, UUID ownerId);
+    Project addMember(UUID projectId, UUID userId, ProjectRole role, UUID requester);
 
-    Project removeMember (UUID projectId, UUID userId, UUID ownerId);
+    Project removeMember (UUID projectId, UUID userId, UUID requester);
 
     Project archive (UUID projectId, UUID requesterId);
 
     Project findById (UUID projectId, UUID requesterId);
 
-    List<Project> findByMemberId (UUID userId, UUID requesterId);
+    List<Project> findByMemberId (UUID requesterId);
 }
