@@ -23,7 +23,7 @@ public class ProjectPersistenceMapper {
                 jpaEntity.getName(),
                 jpaEntity.getDescription(),
                 jpaEntity.getStatus(),
-                jpaEntity.getMembers() == null ? Collections.emptyList() : jpaEntity.getMembers()
+                jpaEntity.getMembers() == null ? List.of() : jpaEntity.getMembers()
                         .stream()
                         .map(projectMemberPersistenceMapper::toEntity)
                         .collect(Collectors.toList()),
@@ -41,10 +41,10 @@ public class ProjectPersistenceMapper {
                 project.getStatus(),
                 Collections.emptyList(),
                 project.getCreatedAt(),
-                project.getUpdateAt()
+                project.getUpdatedAt()
         );
 
-        List<ProjectMemberJpaEntity> membersJpa = project.getMembers() == null ? Collections.emptyList() : project.getMembers()
+        List<ProjectMemberJpaEntity> membersJpa = project.getMembers() == null ? List.of() : project.getMembers()
                 .stream()
                 .map(member -> projectMemberPersistenceMapper.toJpa(member, projectJpa))
                 .collect(Collectors.toList());
