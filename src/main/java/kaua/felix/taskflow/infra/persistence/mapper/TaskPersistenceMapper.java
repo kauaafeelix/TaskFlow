@@ -26,7 +26,7 @@ public class TaskPersistenceMapper {
           jpaEntity.getStatus(),
           jpaEntity.getPriority(),
           jpaEntity.getDeadline(),
-          userMapper.toEntity(jpaEntity.getAssignee()),
+          jpaEntity.getAssignee() == null ? null : userMapper.toEntity(jpaEntity.getAssignee()),
                 jpaEntity.getComments() == null
                         ? List.of()
                         : jpaEntity.getComments()
