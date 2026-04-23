@@ -1,4 +1,4 @@
-package kaua.felix.taskflow.domain.service;
+package kaua.felix.taskflow.infra.security;
 
 import kaua.felix.taskflow.domain.entity.User;
 import kaua.felix.taskflow.domain.ports.in.AuthUseCase;
