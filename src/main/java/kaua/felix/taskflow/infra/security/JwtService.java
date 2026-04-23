@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import kaua.felix.taskflow.domain.entity.User;
+import kaua.felix.taskflow.domain.ports.out.TokenRepositoryPort;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,7 @@ import java.security.Key;
 import java.util.Date;
 
 @Service
-public class JwtService {
+public class JwtService implements TokenRepositoryPort {
 
     @Value("${jwt.secret}")
     private String secret;

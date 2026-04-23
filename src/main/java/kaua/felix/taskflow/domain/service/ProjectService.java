@@ -7,7 +7,6 @@ import kaua.felix.taskflow.domain.ports.in.ProjectUseCase;
 import kaua.felix.taskflow.domain.ports.out.ProjectRepositoryPort;
 import kaua.felix.taskflow.domain.ports.out.UserRepositoryPort;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.projection.EntityProjection;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
