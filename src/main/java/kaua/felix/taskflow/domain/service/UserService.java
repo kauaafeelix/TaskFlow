@@ -48,4 +48,12 @@ public class UserService implements UserUseCase {
 
         return userRepositoryPort.save(user);
     }
+
+    @Override
+    public User findByEmail(String email) {
+        return userRepositoryPort.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+
 }
