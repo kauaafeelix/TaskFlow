@@ -2,9 +2,9 @@ package kaua.felix.taskflow.infra.web.controller;
 
 import jakarta.validation.Valid;
 import kaua.felix.taskflow.domain.ports.in.AuthUseCase;
-import kaua.felix.taskflow.infra.web.dto.request.LoginRequestDto;
-import kaua.felix.taskflow.infra.web.dto.request.RegisterRequestDto;
-import kaua.felix.taskflow.infra.web.dto.response.AuthResponseDto;
+import kaua.felix.taskflow.infra.web.dto.auth.request.LoginRequestDto;
+import kaua.felix.taskflow.infra.web.dto.auth.request.RegisterRequestDto;
+import kaua.felix.taskflow.infra.web.dto.auth.response.AuthResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
