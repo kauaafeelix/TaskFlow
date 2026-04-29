@@ -8,4 +8,5 @@ public interface UserUseCase {
     User findById(UUID id);
     User updateProfile(UUID userId, String name, String avatarUrl);
     User changePassword(UUID userId, String oldPassword, String newPassword);
+    User findByEmail(String email);
 }
