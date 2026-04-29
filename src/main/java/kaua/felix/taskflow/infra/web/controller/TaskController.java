@@ -6,19 +6,15 @@ import kaua.felix.taskflow.domain.ports.in.TaskUseCase;
 import kaua.felix.taskflow.domain.ports.in.UserUseCase;
 import kaua.felix.taskflow.infra.web.dto.task.request.AssisgnRequestDto;
 import kaua.felix.taskflow.infra.web.dto.task.request.ChangeStatusRequestDto;
-import kaua.felix.taskflow.infra.web.dto.task.request.CreateTaskRequestDto;
 import kaua.felix.taskflow.infra.web.dto.task.request.UpdateTaskRequestDto;
 import kaua.felix.taskflow.infra.web.dto.task.response.TaskResponseDto;
 import kaua.felix.taskflow.infra.web.mapper.TaskWebMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -29,22 +25,6 @@ public class TaskController {
     private final TaskUseCase taskUseCase;
     private final UserUseCase userUseCase;
     private final TaskWebMapper taskWebMapper;
-
-
-    @PostMapping("api/projects/{projectId}/tasks")
-    public ResponseEntity<TaskResponseDto> create (
-
-            @PathVariable UUID projectId,
-            @Valid @RequestBody CreateTaskRequestDto request,
-            @AuthenticationPrincipal UserDetails userDetails
-
-        ){
-
-        UUID requesterId = userUseCase.findByEmail(userDetails.getUsername()).getId();
-        Task task = taskUseCase.create(projectId, request.title(), request.description(), request.priority(), request.deadline(), request.assigneeId(), requesterId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(taskWebMapper.toDto(task));
-
-    }
 
 
     @PutMapping("/{id}")
@@ -96,20 +76,6 @@ public class TaskController {
         Task task = taskUseCase.findById(id, requesterId);
         return ResponseEntity.ok(taskWebMapper.toDto(task));
 
-    }
-
-    @GetMapping("api/projects/{projectId}/tasks")
-    public ResponseEntity<List<TaskResponseDto>> findByProjectId (
-        @PathVariable UUID projectId,
-        @AuthenticationPrincipal UserDetails userDetails
-    ){
-
-        UUID requesterId = userUseCase.findByEmail(userDetails.getUsername()).getId();
-        List<Task> tasks = taskUseCase.findByProjectId(projectId, requesterId);
-
-        return ResponseEntity.ok(tasks.stream()
-                .map(taskWebMapper::toDto)
-                .toList());
     }
 
     @DeleteMapping("/{id}")
