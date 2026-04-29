@@ -4,12 +4,14 @@ import jakarta.validation.Valid;
 import kaua.felix.taskflow.domain.entity.Task;
 import kaua.felix.taskflow.domain.ports.in.TaskUseCase;
 import kaua.felix.taskflow.domain.ports.in.UserUseCase;
+import kaua.felix.taskflow.infra.web.dto.task.request.AddCommentRequestDto;
 import kaua.felix.taskflow.infra.web.dto.task.request.AssisgnRequestDto;
 import kaua.felix.taskflow.infra.web.dto.task.request.ChangeStatusRequestDto;
 import kaua.felix.taskflow.infra.web.dto.task.request.UpdateTaskRequestDto;
 import kaua.felix.taskflow.infra.web.dto.task.response.TaskResponseDto;
 import kaua.felix.taskflow.infra.web.mapper.TaskWebMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -85,6 +87,28 @@ public class TaskController {
     ) {
         UUID requesterId = userUseCase.findByEmail(userDetails.getUsername()).getId();
         taskUseCase.delete(id, requesterId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/comments")
+    public ResponseEntity<TaskResponseDto> addComment(
+            @PathVariable UUID id,
+            @Valid @RequestBody AddCommentRequestDto request,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        UUID requesterId = userUseCase.findByEmail(userDetails.getUsername()).getId();
+        Task task = taskUseCase.addComment(id, request.content(), requesterId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(taskWebMapper.toDto(task));
+    }
+
+    @DeleteMapping("/{id}/comments/{commentId}")
+    public ResponseEntity<Void> removeComment(
+            @PathVariable UUID id,
+            @PathVariable UUID commentId,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        UUID requesterId = userUseCase.findByEmail(userDetails.getUsername()).getId();
+        taskUseCase.removeComment(id, commentId, requesterId);
         return ResponseEntity.noContent().build();
     }
 }
