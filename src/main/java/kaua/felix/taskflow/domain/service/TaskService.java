@@ -5,6 +5,8 @@ import kaua.felix.taskflow.domain.entity.Task;
 import kaua.felix.taskflow.domain.entity.User;
 import kaua.felix.taskflow.domain.entity.enuns.TaskStatus;
 import kaua.felix.taskflow.domain.entity.enuns.TypePriority;
+import kaua.felix.taskflow.domain.exception.DomainException;
+import kaua.felix.taskflow.domain.exception.UnauthorizedOperationException;
 import kaua.felix.taskflow.domain.ports.in.TaskUseCase;
 import kaua.felix.taskflow.domain.ports.out.ProjectRepositoryPort;
 import kaua.felix.taskflow.domain.ports.out.TaskRepositoryPort;
@@ -29,24 +31,24 @@ public class TaskService implements TaskUseCase {
     public Task create(UUID projectId, String title, String description, TypePriority priority, LocalDate deadline, UUID assigneeId, UUID requesterId) {
 
         Project project = projectRepositoryPort.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                .orElseThrow(() -> new DomainException("Project not found"));
 
         if (!project.isMember(requesterId)) {
-            throw new RuntimeException("Requester is not a member of the project");
+            throw new UnauthorizedOperationException("Requester is not a member of the project");
         }
 
         if (!project.canEdit(requesterId)){
-            throw new RuntimeException("Requester does not have permission to create tasks in this project");
+            throw new UnauthorizedOperationException("Requester does not have permission to create tasks in this project");
         }
 
         User assignee = null;
 
         if (assigneeId != null){
             assignee = userRepositoryPort.findById(assigneeId)
-                    .orElseThrow(() -> new RuntimeException("Assignee not found"));
+                    .orElseThrow(() -> new DomainException("Assignee not found"));
 
             if (!project.isMember(assigneeId)){
-                throw new RuntimeException("Assignee is not a member of the project");
+                throw new UnauthorizedOperationException("Assignee is not a member of the project");
             }
         }
 
@@ -60,13 +62,13 @@ public class TaskService implements TaskUseCase {
                        TypePriority priority, LocalDate deadline, UUID requesterId) {
 
         Task task = taskRepositoryPort.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new DomainException("Task not found"));
 
         Project project = projectRepositoryPort.findById(task.getProjectId())
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                .orElseThrow(() -> new DomainException("Project not found"));
 
         if (!project.canEdit(requesterId)) {
-            throw new RuntimeException("Requester does not have permission to create tasks in this project");
+            throw new UnauthorizedOperationException("Requester does not have permission to create tasks in this project");
         }
 
         task.update(title, description, priority, deadline);
@@ -78,12 +80,12 @@ public class TaskService implements TaskUseCase {
     public Task changeStatus(UUID taskId, TaskStatus newStatus, UUID requesterId) {
 
         Task task = taskRepositoryPort.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new DomainException("Task not found"));
         Project project = projectRepositoryPort.findById(task.getProjectId())
-                .orElseThrow(()-> new RuntimeException("Project not found"));
+                .orElseThrow(()-> new DomainException("Project not found"));
 
         if (!project.canEdit(requesterId)){
-            throw new RuntimeException("Requester does not have permission to edit tasks in this project");
+            throw new UnauthorizedOperationException("Requester does not have permission to edit tasks in this project");
         }
 
         task.changeStatus(newStatus);
@@ -94,19 +96,19 @@ public class TaskService implements TaskUseCase {
     @Override
     public Task assign(UUID taskId, UUID assigneeId, UUID requesterId) {
         Task task = taskRepositoryPort.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new DomainException("Task not found"));
         Project project = projectRepositoryPort.findById(task.getProjectId())
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                .orElseThrow(() -> new DomainException("Project not found"));
 
         if (!project.canEdit(requesterId)){
-            throw new RuntimeException("Requester does not have permission to edit tasks in this project");
+            throw new UnauthorizedOperationException("Requester does not have permission to edit tasks in this project");
         }
 
         User assignee = userRepositoryPort.findById(assigneeId)
-                .orElseThrow(()-> new RuntimeException("User not found"));
+                .orElseThrow(()-> new DomainException("User not found"));
 
         if (!project.isMember(assigneeId)){
-            throw new RuntimeException("User is not a member of the project.");
+            throw new UnauthorizedOperationException("User is not a member of the project.");
         }
 
         task.assign(assignee);
@@ -118,12 +120,12 @@ public class TaskService implements TaskUseCase {
     public Task findById(UUID taskId, UUID requesterId) {
 
         Task task = taskRepositoryPort.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new DomainException("Task not found"));
         Project project = projectRepositoryPort.findById(task.getProjectId())
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                .orElseThrow(() -> new DomainException("Project not found"));
 
         if (!project.isMember(requesterId)){
-            throw new RuntimeException("User is not a member of the project.    ");
+            throw new UnauthorizedOperationException("User is not a member of the project.    ");
         }
 
         return task;
@@ -133,10 +135,10 @@ public class TaskService implements TaskUseCase {
     public List<Task> findByProjectId(UUID projectId, UUID requesterId) {
 
         Project project = projectRepositoryPort.findById(projectId)
-                .orElseThrow(()-> new RuntimeException("Project not found"));
+                .orElseThrow(()-> new DomainException("Project not found"));
 
         if (!project.isMember(requesterId)){
-            throw new RuntimeException("User is not a member of the project.");
+            throw new UnauthorizedOperationException("User is not a member of the project.");
         }
 
         return taskRepositoryPort.findByProjectId(projectId);
@@ -145,13 +147,13 @@ public class TaskService implements TaskUseCase {
     @Override
     public void delete(UUID taskId, UUID requesterId) {
         Task task = taskRepositoryPort.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new DomainException("Task not found"));
 
         Project project = projectRepositoryPort.findById(task.getProjectId())
-                        .orElseThrow(()-> new RuntimeException("Project not found"));
+                        .orElseThrow(()-> new DomainException("Project not found"));
 
         if (!project.canEdit(requesterId)){
-            throw new RuntimeException("You don't have permission to delete this task.");
+            throw new UnauthorizedOperationException("You don't have permission to delete this task.");
         }
 
         taskRepositoryPort.delete(taskId);
