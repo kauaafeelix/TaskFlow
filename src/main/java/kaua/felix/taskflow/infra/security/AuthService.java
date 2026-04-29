@@ -1,6 +1,8 @@
 package kaua.felix.taskflow.infra.security;
 
 import kaua.felix.taskflow.domain.entity.User;
+import kaua.felix.taskflow.domain.exception.DomainException;
+import kaua.felix.taskflow.domain.exception.UnauthorizedOperationException;
 import kaua.felix.taskflow.domain.ports.in.AuthUseCase;
 import kaua.felix.taskflow.domain.ports.out.TokenRepositoryPort;
 import kaua.felix.taskflow.domain.ports.out.UserRepositoryPort;
@@ -29,7 +31,7 @@ public class AuthService implements AuthUseCase {
         );
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new DomainException("User not found"));
 
         return tokenRepositoryPort.generateToken(user);
     }
@@ -38,7 +40,7 @@ public class AuthService implements AuthUseCase {
     public User register(String name, String email, String password) {
 
         if (userRepository.existsByEmail(email)){
-            throw new RuntimeException("Email already in use");
+            throw new DomainException("Email already in use");
         }
 
         String encodedPassword = passwordEncoder.encode(password);
