@@ -26,5 +26,7 @@ public interface TaskUseCase {
 
     void delete (UUID taskId, UUID requesterId);
 
+    Task addComment(UUID taskId, String content, UUID requesterId);
 
+    void removeComment(UUID taskId, UUID commentId, UUID requesterId);
 }

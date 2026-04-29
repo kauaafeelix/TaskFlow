@@ -158,4 +158,43 @@ public class TaskService implements TaskUseCase {
 
         taskRepositoryPort.delete(taskId);
     }
+
+    @Override
+    public Task addComment(UUID taskId, String content, UUID requesterId) {
+        Task task = taskRepositoryPort.findById(taskId)
+                .orElseThrow(() -> new DomainException("Task not found"));
+
+        Project project = projectRepositoryPort.findById(task.getProjectId())
+                .orElseThrow(() -> new DomainException("Project not found"));
+
+        if (!project.isMember(requesterId)) {
+            throw new UnauthorizedOperationException("User is not a member of the project");
+        }
+
+        User user = userRepositoryPort.findById(requesterId)
+                .orElseThrow(() -> new DomainException("User not found"));
+
+        task.addComment(user, content);
+
+        return taskRepositoryPort.save(task);
+
+    }
+
+    @Override
+    public void removeComment(UUID taskId, UUID commentId, UUID requesterId) {
+
+        Task task = taskRepositoryPort.findById(taskId)
+                .orElseThrow(() -> new DomainException("Task not found"));
+
+        Project project = projectRepositoryPort.findById(task.getProjectId())
+                .orElseThrow(() -> new DomainException("Project not found"));
+
+        if (!project.isMember(requesterId)) {
+            throw new UnauthorizedOperationException("User is not a member of the project");
+        }
+
+        task.removeComment(commentId, requesterId);
+
+        taskRepositoryPort.save(task);
+    }
 }
