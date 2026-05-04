@@ -19,7 +19,7 @@ services:
     depends_on:
       - db
     environment:
-      DB_URL: jdbc:postgresql://db:5432/taskflow
+      DB_URL: ${DB_URL}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
