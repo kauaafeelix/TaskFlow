@@ -5,7 +5,7 @@ import kaua.felix.taskflow.domain.entity.enuns.ProjectRole;
 import java.util.UUID;
 
 public record ProjectMemberResponseDto(
-        UUID userId,
+        String email,
         String name,
         ProjectRole role
 ) {

@@ -17,12 +17,12 @@ public class TaskWebMapper {
                 task.getStatus(),
                 task.getPriority(),
                 task.getDeadline(),
-                task.getAssignee() == null ? null : task.getAssignee().getId(),
+                task.getAssignee() == null ? null : task.getAssignee().getEmail(),
                 task.getComments().stream()
                         .map(comment -> new CommentResponseDto(
                                 comment.getId(),
                                 comment.getContent(),
-                                comment.getAuthor().getId(),
+                                comment.getAuthor().getEmail(),
                                 comment.getAuthor().getName(),
                                 comment.getCreatedAt()
                         ))

@@ -8,6 +8,7 @@ import kaua.felix.taskflow.domain.ports.in.TaskUseCase;
 import kaua.felix.taskflow.domain.ports.in.UserUseCase;
 import kaua.felix.taskflow.infra.web.dto.project.request.AddMemberRequestDto;
 import kaua.felix.taskflow.infra.web.dto.project.request.CreateProjectRequestDto;
+import kaua.felix.taskflow.infra.web.dto.project.request.RemoveMemberRequestDto;
 import kaua.felix.taskflow.infra.web.dto.project.request.UpdateProjectRequestDto;
 import kaua.felix.taskflow.infra.web.dto.project.response.ProjectDetailResponseDto;
 import kaua.felix.taskflow.infra.web.dto.project.response.ProjectResponseDto;
@@ -117,26 +118,27 @@ public class ProjectController {
     }
 
     @PostMapping("/{id}/members")
-    public ResponseEntity<ProjectResponseDto> addMember (
+    public ResponseEntity<ProjectResponseDto> addMember(
             @PathVariable UUID id,
             @Valid @RequestBody AddMemberRequestDto request,
             @AuthenticationPrincipal UserDetails userDetails
-    ){
-
+    ) {
         UUID requesterId = userUseCase.findByEmail(userDetails.getUsername()).getId();
-        Project project = projectUseCase.addMember(id, request.userId(), request.role(), requesterId);
+        UUID userId = userUseCase.findByEmail(request.email()).getId();
+        Project project = projectUseCase.addMember(id, userId, request.role(), requesterId);
         return ResponseEntity.ok(projectWebMapper.toDto(project));
     }
 
-    @DeleteMapping("/{id}/members/{userId}")
-    public ResponseEntity<ProjectResponseDto> removeMember (
+    @DeleteMapping("/{id}/members")
+    public ResponseEntity<Void> removeMember(
             @PathVariable UUID id,
-            @PathVariable UUID userId,
+            @Valid @RequestBody RemoveMemberRequestDto request,
             @AuthenticationPrincipal UserDetails userDetails
-    ){
-        UUID requester = userUseCase.findByEmail(userDetails.getUsername()).getId();
-        Project project = projectUseCase.removeMember(id, userId, requester);
-        return ResponseEntity.ok(projectWebMapper.toDto(project));
+    ) {
+        UUID requesterId = userUseCase.findByEmail(userDetails.getUsername()).getId();
+        UUID userId = userUseCase.findByEmail(request.email()).getId();
+        projectUseCase.removeMember(id, userId, requesterId);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/archive")
