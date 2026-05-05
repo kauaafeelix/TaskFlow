@@ -2,23 +2,22 @@ package kaua.felix.taskflow.infra.persistence.entity;
 
 import jakarta.persistence.*;
 import kaua.felix.taskflow.domain.entity.enuns.ProjectStatus;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.springframework.data.domain.Persistable;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "projects")
-public class ProjectJpaEntity {
+public class ProjectJpaEntity implements Persistable<UUID> {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(nullable = false)
@@ -39,4 +38,29 @@ public class ProjectJpaEntity {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @Transient
+    private boolean isNew = true;
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PostPersist
+    @PostLoad
+    void markNotNew() {
+        this.isNew = false;
+    }
+
+    public ProjectJpaEntity(UUID id, String name, String description, ProjectStatus status, List<ProjectMemberJpaEntity> members,
+                            LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.status = status;
+        this.members = members;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
 }

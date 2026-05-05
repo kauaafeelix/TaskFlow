@@ -1,22 +1,21 @@
 package kaua.felix.taskflow.infra.persistence.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.springframework.data.domain.Persistable;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "users")
-public class UserJpaEntity {
+public class UserJpaEntity implements Persistable<UUID> {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(nullable = false)
@@ -36,4 +35,28 @@ public class UserJpaEntity {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @Transient
+    private boolean isNew = true;
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PostPersist
+    @PostLoad
+    void markNotNew() {
+        this.isNew = false;
+    }
+
+    public UserJpaEntity(UUID id, String name, String email, String passwordHash, String avatarUrl, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.avatarUrl = avatarUrl;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
 }
