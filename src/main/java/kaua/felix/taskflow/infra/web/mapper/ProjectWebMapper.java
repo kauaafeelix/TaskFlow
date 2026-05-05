@@ -23,7 +23,7 @@ public class ProjectWebMapper {
                 project.getStatus(),
                 project.getMembers().stream()
                         .map(member -> new ProjectMemberResponseDto(
-                                member.getUser().getId(),
+                                member.getUser().getEmail(),
                                 member.getUser().getName(),
                                 member.getRole()
                         ))
@@ -39,7 +39,7 @@ public class ProjectWebMapper {
                 project.getStatus(),
                 project.getMembers().stream()
                         .map(member -> new ProjectMemberResponseDto(
-                                member.getUser().getId(),
+                                member.getUser().getEmail(),
                                 member.getUser().getName(),
                                 member.getRole()
                         ))
