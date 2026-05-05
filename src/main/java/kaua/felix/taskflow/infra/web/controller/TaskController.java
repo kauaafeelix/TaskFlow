@@ -4,10 +4,7 @@ import jakarta.validation.Valid;
 import kaua.felix.taskflow.domain.entity.Task;
 import kaua.felix.taskflow.domain.ports.in.TaskUseCase;
 import kaua.felix.taskflow.domain.ports.in.UserUseCase;
-import kaua.felix.taskflow.infra.web.dto.task.request.AddCommentRequestDto;
-import kaua.felix.taskflow.infra.web.dto.task.request.AssisgnRequestDto;
-import kaua.felix.taskflow.infra.web.dto.task.request.ChangeStatusRequestDto;
-import kaua.felix.taskflow.infra.web.dto.task.request.UpdateTaskRequestDto;
+import kaua.felix.taskflow.infra.web.dto.task.request.*;
 import kaua.felix.taskflow.infra.web.dto.task.response.TaskResponseDto;
 import kaua.felix.taskflow.infra.web.mapper.TaskWebMapper;
 import lombok.RequiredArgsConstructor;
@@ -57,15 +54,14 @@ public class TaskController {
 
     @PatchMapping("/{id}/assign")
     public ResponseEntity<TaskResponseDto> assign(
-        @PathVariable UUID id,
-        @Valid @RequestBody AssisgnRequestDto request,
-        @AuthenticationPrincipal UserDetails userDetails
-    ){
-
+            @PathVariable UUID id,
+            @Valid @RequestBody AssignRequestDto request,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
         UUID requesterId = userUseCase.findByEmail(userDetails.getUsername()).getId();
-        Task task = taskUseCase.assign(id, request.assigneeId(), requesterId);
+        UUID assigneeId = userUseCase.findByEmail(request.email()).getId();
+        Task task = taskUseCase.assign(id, assigneeId, requesterId);
         return ResponseEntity.ok(taskWebMapper.toDto(task));
-
     }
 
     @GetMapping("/{id}")
