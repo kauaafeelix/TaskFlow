@@ -33,7 +33,8 @@ public class ProjectRepositoryAdapter implements ProjectRepositoryPort {
                     existing.setDescription(project.getDescription());
                     existing.setStatus(project.getStatus());
                     existing.setUpdatedAt(project.getUpdatedAt());
-                    existing.setMembers(
+                    existing.getMembers().clear();
+                    existing.getMembers().addAll(
                             project.getMembers().stream()
                                     .map(member -> projectMemberMapper.toJpa(member, existing))
                                     .collect(Collectors.toList())

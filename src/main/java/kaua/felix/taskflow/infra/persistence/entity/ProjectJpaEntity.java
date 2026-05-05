@@ -30,7 +30,7 @@ public class ProjectJpaEntity implements Persistable<UUID> {
     @Column(nullable = false)
     private ProjectStatus status;
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectMemberJpaEntity> members;
 
     @Column(nullable = false)
