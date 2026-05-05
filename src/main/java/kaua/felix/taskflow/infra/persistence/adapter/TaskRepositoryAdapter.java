@@ -1,10 +1,14 @@
 package kaua.felix.taskflow.infra.persistence.adapter;
 
+import jakarta.transaction.Transactional;
 import kaua.felix.taskflow.domain.entity.Task;
+import kaua.felix.taskflow.domain.exception.DomainException;
 import kaua.felix.taskflow.domain.ports.out.TaskRepositoryPort;
 import kaua.felix.taskflow.infra.persistence.entity.ProjectJpaEntity;
 import kaua.felix.taskflow.infra.persistence.entity.TaskJpaEntity;
+import kaua.felix.taskflow.infra.persistence.mapper.CommentPersistenceMapper;
 import kaua.felix.taskflow.infra.persistence.mapper.TaskPersistenceMapper;
+import kaua.felix.taskflow.infra.persistence.mapper.UserPersistenceMapper;
 import kaua.felix.taskflow.infra.persistence.repository.ProjectJpaRepository;
 import kaua.felix.taskflow.infra.persistence.repository.TaskJpaRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +17,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -21,16 +26,36 @@ public class TaskRepositoryAdapter implements TaskRepositoryPort {
     private final TaskJpaRepository taskRepository;
     private final TaskPersistenceMapper taskMapper;
     private final ProjectJpaRepository projectRepository;
+    private final CommentPersistenceMapper commentMapper;
+    private final UserPersistenceMapper userMapper;
 
     @Override
+    @Transactional
     public Task save(Task task) {
         ProjectJpaEntity projectJpa = projectRepository.findById(task.getProjectId())
-                .orElseThrow(() -> new RuntimeException("Project not Found"));
-        TaskJpaEntity taskJpa = taskMapper.toJpa(task, projectJpa);
+                .orElseThrow(() -> new DomainException("Project not found"));
 
-        taskRepository.save(taskJpa);
+        TaskJpaEntity jpaEntity = taskRepository.findById(task.getId())
+                .map(existing -> {
+                    existing.setTitle(task.getTitle());
+                    existing.setDescription(task.getDescription());
+                    existing.setStatus(task.getStatus());
+                    existing.setPriority(task.getPriority());
+                    existing.setDeadline(task.getDeadline());
+                    existing.setUpdatedAt(task.getUpdatedAt());
+                    existing.setAssignee(task.getAssignee() == null ? null : userMapper.toJpa(task.getAssignee()));
+                    existing.getComments().clear();
+                    existing.getComments().addAll(
+                            task.getComments().stream()
+                                    .map(comment -> commentMapper.toJpa(comment, existing))
+                                    .collect(Collectors.toList())
+                    );
+                    return existing;
+                })
+                .orElseGet(() -> taskMapper.toJpa(task, projectJpa));
 
-        return taskMapper.toEntity(taskJpa);
+        TaskJpaEntity saved = taskRepository.save(jpaEntity);
+        return taskMapper.toEntity(saved);
     }
 
     @Override

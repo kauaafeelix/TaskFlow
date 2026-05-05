@@ -48,7 +48,7 @@ public class TaskJpaEntity implements Persistable<UUID> {
     @JoinColumn(name = "assignee_id", nullable = true)
     private UserJpaEntity assignee;
 
-    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommentJpaEntity> comments;
 
     @Column(nullable = false)
