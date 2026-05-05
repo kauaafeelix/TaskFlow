@@ -1,5 +1,8 @@
 package kaua.felix.taskflow.domain.entity;
 
+import kaua.felix.taskflow.domain.exception.DomainException;
+import kaua.felix.taskflow.domain.exception.UnauthorizedOperationException;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -24,16 +27,16 @@ public class Comment {
 
     public static Comment create(UUID taskId, User author, String content) {
         if (content == null || content.isBlank())
-            throw new RuntimeException("Conteúdo do comentário não pode ser vazio");
+            throw new DomainException("Comment content cannot be empty");
         LocalDateTime now = LocalDateTime.now();
         return new Comment(UUID.randomUUID(), taskId, author, content, now, now);
     }
 
     public void edit(String newContent, UUID requesterId) {
         if (!this.author.getId().equals(requesterId))
-            throw new RuntimeException("Apenas o autor pode editar o comentário");
+            throw new UnauthorizedOperationException("Only the author can edit the comment");
         if (newContent == null || newContent.isBlank())
-            throw new RuntimeException("Conteúdo do comentário não pode ser vazio");
+            throw new DomainException("Comment content cannot be empty");
         this.content = newContent;
         this.updatedAt = LocalDateTime.now();
     }
