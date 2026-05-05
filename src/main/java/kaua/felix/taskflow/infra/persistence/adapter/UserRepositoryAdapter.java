@@ -1,5 +1,6 @@
 package kaua.felix.taskflow.infra.persistence.adapter;
 
+import jakarta.transaction.Transactional;
 import kaua.felix.taskflow.domain.entity.User;
 import kaua.felix.taskflow.domain.ports.out.UserRepositoryPort;
 import kaua.felix.taskflow.infra.persistence.entity.UserJpaEntity;
@@ -19,13 +20,11 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     private final UserPersistenceMapper userMapper;
 
     @Override
+    @Transactional
     public User save(User user) {
-        UserJpaEntity userJpa = userMapper.toJpa(user);
-
-        userRepository.save(userJpa);
-
-        return userMapper.toEntity(userJpa);
-
+        UserJpaEntity jpaEntity = userMapper.toJpa(user);
+        UserJpaEntity saved = userRepository.save(jpaEntity);
+        return userMapper.toEntity(saved);
     }
 
     @Override

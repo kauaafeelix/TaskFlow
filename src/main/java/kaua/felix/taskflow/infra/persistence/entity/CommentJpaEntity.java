@@ -1,22 +1,21 @@
 package kaua.felix.taskflow.infra.persistence.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.springframework.data.domain.Persistable;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "comments")
-public class CommentJpaEntity {
+public class CommentJpaEntity implements Persistable<UUID> {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne
@@ -35,4 +34,27 @@ public class CommentJpaEntity {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @Transient
+    private boolean isNew = true;
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PostPersist
+    @PostLoad
+    void markNotNew() {
+        this.isNew = false;
+    }
+
+    public CommentJpaEntity(UUID id, TaskJpaEntity task, UserJpaEntity author, String content, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.task = task;
+        this.author = author;
+        this.content = content;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
 }

@@ -37,16 +37,15 @@ public class AuthService implements AuthUseCase {
     }
 
     @Override
-    public User register(String name, String email, String password) {
-
-        if (userRepository.existsByEmail(email)){
+    public String register(String name, String email, String password) {
+        if (userRepository.existsByEmail(email)) {
             throw new DomainException("Email already in use");
         }
 
         String encodedPassword = passwordEncoder.encode(password);
-
         User user = User.create(name, email, encodedPassword);
+        User savedUser = userRepository.save(user);
 
-        return userRepository.save(user);
+        return tokenRepositoryPort.generateToken(savedUser);
     }
 }
