@@ -17,7 +17,7 @@ public record TaskResponseDto(
         TaskStatus status,
         TypePriority priority,
         LocalDate deadline,
-        UUID assignee,
+        String assigneeEmail,
         List<CommentResponseDto> comments,
         LocalDateTime createdAt
 ) {
