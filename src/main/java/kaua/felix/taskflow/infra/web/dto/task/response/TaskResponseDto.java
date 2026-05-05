@@ -1,11 +1,12 @@
 package kaua.felix.taskflow.infra.web.dto.task.response;
 
-import kaua.felix.taskflow.domain.entity.enuns.ProjectStatus;
 import kaua.felix.taskflow.domain.entity.enuns.TaskStatus;
 import kaua.felix.taskflow.domain.entity.enuns.TypePriority;
+import kaua.felix.taskflow.infra.web.dto.comment.CommentResponseDto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public record TaskResponseDto(
@@ -17,6 +18,7 @@ public record TaskResponseDto(
         TypePriority priority,
         LocalDate deadline,
         UUID assignee,
+        List<CommentResponseDto> comments,
         LocalDateTime createdAt
 ) {
 }

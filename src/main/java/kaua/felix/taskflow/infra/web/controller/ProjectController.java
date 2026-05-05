@@ -9,6 +9,7 @@ import kaua.felix.taskflow.domain.ports.in.UserUseCase;
 import kaua.felix.taskflow.infra.web.dto.project.request.AddMemberRequestDto;
 import kaua.felix.taskflow.infra.web.dto.project.request.CreateProjectRequestDto;
 import kaua.felix.taskflow.infra.web.dto.project.request.UpdateProjectRequestDto;
+import kaua.felix.taskflow.infra.web.dto.project.response.ProjectDetailResponseDto;
 import kaua.felix.taskflow.infra.web.dto.project.response.ProjectResponseDto;
 import kaua.felix.taskflow.infra.web.dto.task.request.CreateTaskRequestDto;
 import kaua.felix.taskflow.infra.web.dto.task.response.TaskResponseDto;
@@ -78,15 +79,14 @@ public class ProjectController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProjectResponseDto> findById (
+    public ResponseEntity<ProjectDetailResponseDto> findById(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserDetails userDetails
-    ){
-
+    ) {
         UUID requesterId = userUseCase.findByEmail(userDetails.getUsername()).getId();
         Project project = projectUseCase.findById(id, requesterId);
-        return ResponseEntity.ok(projectWebMapper.toDto(project));
-
+        List<Task> tasks = taskUseCase.findByProjectId(id, requesterId);
+        return ResponseEntity.ok(projectWebMapper.toDetailDto(project, tasks));
     }
 
     @GetMapping("/{projectId}/tasks")

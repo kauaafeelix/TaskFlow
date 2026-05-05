@@ -2,6 +2,8 @@ package kaua.felix.taskflow.domain.entity;
 
 import kaua.felix.taskflow.domain.entity.enuns.TaskStatus;
 import kaua.felix.taskflow.domain.entity.enuns.TypePriority;
+import kaua.felix.taskflow.domain.exception.DomainException;
+import kaua.felix.taskflow.domain.exception.UnauthorizedOperationException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -104,18 +106,19 @@ public class Task {
             return comment;
         }
 
-        public void removeComment (UUID commentId, UUID requesterId){
-            Comment comment = comments.stream()
+        public void removeComment(UUID commentId, UUID requesterId) {
+            Comment comment = this.comments.stream()
                     .filter(c -> c.getId().equals(commentId))
                     .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Comentário não encontrado"));
+                    .orElseThrow(() -> new DomainException("Comment not found"));
 
             if (!comment.getAuthor().getId().equals(requesterId)) {
-                throw new RuntimeException("Apenas o autor do comentário pode removê-lo");
+                throw new UnauthorizedOperationException("Only the author can remove a comment");
             }
-            comments.remove(comment);
+
+            this.comments.remove(comment);
             this.updatedAt = LocalDateTime.now();
-        }
+    }
 
         public boolean isOverdue(){
             return deadline != null
