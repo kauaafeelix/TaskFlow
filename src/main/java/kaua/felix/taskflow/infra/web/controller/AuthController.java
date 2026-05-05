@@ -33,12 +33,8 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<AuthResponseDto> register(
             @Valid @RequestBody RegisterRequestDto registerRequest
-            ){
-
-        authUseCase.register(registerRequest.name(), registerRequest.email(), registerRequest.password());
-
-        String token = authUseCase.login(registerRequest.email(), registerRequest.password());
-
+    ) {
+        String token = authUseCase.register(registerRequest.name(), registerRequest.email(), registerRequest.password());
         return ResponseEntity.status(HttpStatus.CREATED).body(new AuthResponseDto(token));
     }
 }
