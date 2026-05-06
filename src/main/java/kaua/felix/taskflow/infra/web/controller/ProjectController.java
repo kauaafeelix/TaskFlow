@@ -6,6 +6,8 @@ import kaua.felix.taskflow.domain.entity.Task;
 import kaua.felix.taskflow.domain.ports.in.ProjectUseCase;
 import kaua.felix.taskflow.domain.ports.in.TaskUseCase;
 import kaua.felix.taskflow.domain.ports.in.UserUseCase;
+import kaua.felix.taskflow.domain.shared.PageRequestDto;
+import kaua.felix.taskflow.domain.shared.PageResponseDto;
 import kaua.felix.taskflow.infra.web.dto.project.request.AddMemberRequestDto;
 import kaua.felix.taskflow.infra.web.dto.project.request.CreateProjectRequestDto;
 import kaua.felix.taskflow.infra.web.dto.project.request.RemoveMemberRequestDto;
@@ -86,35 +88,53 @@ public class ProjectController {
     ) {
         UUID requesterId = userUseCase.findByEmail(userDetails.getUsername()).getId();
         Project project = projectUseCase.findById(id, requesterId);
-        List<Task> tasks = taskUseCase.findByProjectId(id, requesterId);
-        return ResponseEntity.ok(projectWebMapper.toDetailDto(project, tasks));
+        PageResponseDto<Task> tasks = taskUseCase.findByProjectId(id, requesterId, new PageRequestDto(0, 100));
+        return ResponseEntity.ok(projectWebMapper.toDetailDto(project, tasks.content()));
     }
 
     @GetMapping("/{projectId}/tasks")
-    public ResponseEntity<List<TaskResponseDto>> findByProjectId (
+    public ResponseEntity<PageResponseDto<TaskResponseDto>> findByProjectId(
             @PathVariable UUID projectId,
-            @AuthenticationPrincipal UserDetails userDetails
-    ){
-
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
         UUID requesterId = userUseCase.findByEmail(userDetails.getUsername()).getId();
-        List<Task> tasks = taskUseCase.findByProjectId(projectId, requesterId);
+        PageRequestDto pageRequest = new PageRequestDto(page, size);
+        PageResponseDto<Task> tasks = taskUseCase.findByProjectId(projectId, requesterId, pageRequest);
 
-        return ResponseEntity.ok(tasks.stream()
-                .map(taskWebMapper::toDto)
-                .toList());
+        return ResponseEntity.ok(new PageResponseDto<>(
+                tasks.content().stream()
+                        .map(taskWebMapper::toDto)
+                        .toList(),
+                tasks.currentPage(),
+                tasks.pageSize(),
+                tasks.totalElements(),
+                tasks.totalPages(),
+                tasks.last()
+        ));
     }
 
     @GetMapping
-    public ResponseEntity<List<ProjectResponseDto>> findByMemberId (
-            @AuthenticationPrincipal UserDetails userDetails
-    ){
-
+    public ResponseEntity<PageResponseDto<ProjectResponseDto>> findByMemberId(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
         UUID requesterId = userUseCase.findByEmail(userDetails.getUsername()).getId();
-        List<Project> projects = projectUseCase.findByMemberId(requesterId);
+        PageRequestDto pageRequest = new PageRequestDto(page, size);
+        PageResponseDto<Project> projects = projectUseCase.findByMemberId(requesterId, pageRequest);
 
-        return ResponseEntity.ok(projects.stream()
-                .map(projectWebMapper::toDto)
-                .toList());
+        return ResponseEntity.ok(new PageResponseDto<>(
+                projects.content().stream()
+                        .map(projectWebMapper::toDto)
+                        .toList(),
+                projects.currentPage(),
+                projects.pageSize(),
+                projects.totalElements(),
+                projects.totalPages(),
+                projects.last()
+        ));
     }
 
     @PostMapping("/{id}/members")
