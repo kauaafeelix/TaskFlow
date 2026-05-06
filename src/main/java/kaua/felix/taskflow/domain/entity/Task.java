@@ -2,6 +2,8 @@ package kaua.felix.taskflow.domain.entity;
 
 import kaua.felix.taskflow.domain.entity.enuns.TaskStatus;
 import kaua.felix.taskflow.domain.entity.enuns.TypePriority;
+import kaua.felix.taskflow.domain.exception.DomainException;
+import kaua.felix.taskflow.domain.exception.UnauthorizedOperationException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -52,10 +54,10 @@ public class Task {
     public static Task create(UUID projectId, String title, String description,
                               TypePriority priority, LocalDate deadline, User assignee) {
             if (title == null || title.isBlank()) {
-                throw new RuntimeException("The task title cannot be empty.");
+                throw new DomainException("The task title cannot be empty.");
             }
             if (deadline != null && deadline.isBefore(LocalDate.now())) {
-                throw new RuntimeException("The due date cannot be in the past.");
+                throw new DomainException("The due date cannot be in the past.");
             }
             LocalDateTime now = LocalDateTime.now();
             return new Task(UUID.randomUUID(), projectId, title, description,
@@ -65,9 +67,9 @@ public class Task {
 
     public void update(String title, String description, TypePriority priority, LocalDate deadline) {
         if (title == null || title.isBlank())
-            throw new RuntimeException("The task title cannot be empty.");
+            throw new DomainException("The task title cannot be empty.");
         if (this.status == TaskStatus.DONE || this.status == TaskStatus.CANCELLED)
-            throw new RuntimeException("It is not possible to edit a completed task.\n");
+            throw new DomainException("It is not possible to edit a completed task.\n");
         this.title = title;
         this.description = description;
         this.priority = priority;
@@ -86,7 +88,7 @@ public class Task {
         public void assign (User user){
 
             if (this.status == TaskStatus.DONE || this.status == TaskStatus.CANCELLED) {
-                throw new RuntimeException("Não é possível atribuir uma tarefa finalizada");
+                throw new DomainException("Cannot assign a completed task");
             }
             this.assignee = user;
             this.updatedAt = LocalDateTime.now();
@@ -104,18 +106,19 @@ public class Task {
             return comment;
         }
 
-        public void removeComment (UUID commentId, UUID requesterId){
-            Comment comment = comments.stream()
+        public void removeComment(UUID commentId, UUID requesterId) {
+            Comment comment = this.comments.stream()
                     .filter(c -> c.getId().equals(commentId))
                     .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Comentário não encontrado"));
+                    .orElseThrow(() -> new DomainException("Comment not found"));
 
             if (!comment.getAuthor().getId().equals(requesterId)) {
-                throw new RuntimeException("Apenas o autor do comentário pode removê-lo");
+                throw new UnauthorizedOperationException("Only the author can remove a comment");
             }
-            comments.remove(comment);
+
+            this.comments.remove(comment);
             this.updatedAt = LocalDateTime.now();
-        }
+    }
 
         public boolean isOverdue(){
             return deadline != null
@@ -132,7 +135,7 @@ public class Task {
             case DONE, CANCELLED -> false;
         };
         if (!valid)
-            throw new RuntimeException("Transição de status inválida: " + current + " -> " + next);
+            throw new DomainException("Invalid status transition: " + current + " -> " + next);
     }
 
     public UUID getId() {

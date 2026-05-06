@@ -2,9 +2,9 @@ package kaua.felix.taskflow.domain.entity;
 
 import kaua.felix.taskflow.domain.entity.enuns.ProjectRole;
 import kaua.felix.taskflow.domain.entity.enuns.ProjectStatus;
-import org.hibernate.sql.results.DomainResultCreationException;
+import kaua.felix.taskflow.domain.exception.DomainException;
+import kaua.felix.taskflow.domain.exception.UnauthorizedOperationException;
 
-import javax.naming.OperationNotSupportedException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +34,7 @@ public class Project {
 
     public static Project create (String name, String description, User owner) {
         if (name == null || name.isEmpty()) {
-            throw new RuntimeException("O nome do projeto não pode ser vazio");
+            throw new DomainException("The project name cannot be empty");
         }
             LocalDateTime now = LocalDateTime.now();
             Project project = new Project(UUID.randomUUID(), name, description,
@@ -50,7 +50,7 @@ public class Project {
         ensureCanEdit(requesterId);
 
         if (name == null || name.isBlank()){
-            throw new RuntimeException("O nome do projeto não pode ser vazio");
+            throw new DomainException("The project name cannot be empty");
         }
         this.name = name;
         this.description = description;
@@ -62,7 +62,7 @@ public class Project {
         boolean alreadyMember = members.stream()
                 .anyMatch(m -> m.getUser().getId().equals(user.getId()));
         if (alreadyMember)
-            throw new RuntimeException("Usuário já é membro deste projeto");
+            throw new DomainException("User is already a member of this project");
         members.add(ProjectMember.create(this.id, user, role));
         this.updatedAt = LocalDateTime.now();
     }
@@ -70,10 +70,10 @@ public class Project {
     public void removeMember(UUID userId, UUID requesterId) {
         ensureIsOwner(requesterId);
         if (userId.equals(requesterId))
-            throw new RuntimeException("O owner não pode remover a si mesmo do projeto");
+            throw new DomainException("The owner cannot remove themselves from the project");
         boolean removed = members.removeIf(m -> m.getUser().getId().equals(userId));
         if (!removed)
-            throw new RuntimeException("Usuário não encontrado no projeto");
+            throw new DomainException("User not found in the project");
         this.updatedAt = LocalDateTime.now();
     }
 
@@ -86,7 +86,7 @@ public class Project {
     public void archive(UUID requesterId) {
         ensureIsOwner(requesterId);
         if (this.status == ProjectStatus.ARCHIVED)
-            throw new RuntimeException("Projeto já está arquivado");
+            throw new DomainException("Project is already archived");
         this.status = ProjectStatus.ARCHIVED;
         this.updatedAt = LocalDateTime.now();
     }
@@ -103,7 +103,7 @@ public class Project {
 
     private void ensureCanEdit(UUID requesterId) {
         if (!canEdit(requesterId))
-            throw new RuntimeException("Sem permissão para editar este projeto");
+            throw new UnauthorizedOperationException("You do not have permission to edit this project");
     }
 
     private void ensureIsOwner(UUID requesterId) {
@@ -111,14 +111,14 @@ public class Project {
                 .filter(m -> m.getUser().getId().equals(requesterId))
                 .anyMatch(ProjectMember::isOwner);
         if (!isOwner)
-            throw new RuntimeException("Apenas o owner pode executar esta operação");
+            throw new UnauthorizedOperationException("Only the owner can perform this operation");
     }
 
     private ProjectMember findMember(UUID userId) {
         return members.stream()
                 .filter(m -> m.getUser().getId().equals(userId))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Membro não encontrado no projeto"));
+                .orElseThrow(() -> new DomainException("Member not found in the project"));
     }
 
 
@@ -163,11 +163,11 @@ public class Project {
         return createdAt;
     }
 
-    public LocalDateTime getUpdateAt() {
+    public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdateAt(LocalDateTime updatedAt) {
+    public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
 

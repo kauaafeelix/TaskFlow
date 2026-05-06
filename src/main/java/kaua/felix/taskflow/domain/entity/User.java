@@ -1,5 +1,7 @@
 package kaua.felix.taskflow.domain.entity;
 
+import kaua.felix.taskflow.domain.exception.DomainException;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -25,11 +27,11 @@ public class User {
 
     public static User create(String name, String email, String passwordHash) {
         if (name == null || name.isBlank())
-            throw new RuntimeException("Nome do usuário não pode ser vazio");
+            throw new DomainException("User name cannot be empty");
         if (email == null || !email.contains("@"))
-            throw new RuntimeException("E-mail inválido");
+            throw new DomainException("Invalid email address");
         if (passwordHash == null || passwordHash.isBlank())
-            throw new RuntimeException("Senha não pode ser vazia");
+            throw new DomainException("Password cannot be empty");
 
         LocalDateTime now = LocalDateTime.now();
         return new User(UUID.randomUUID(), name, email, passwordHash, null, now, now);
@@ -37,7 +39,7 @@ public class User {
 
     public void updateProfile(String name, String avatarUrl) {
         if (name == null || name.isBlank())
-            throw new RuntimeException("Nome do usuário não pode ser vazio");
+            throw new DomainException("User name cannot be empty");
         this.name = name;
         this.avatarUrl = avatarUrl;
         this.updatedAt = LocalDateTime.now();
@@ -45,7 +47,7 @@ public class User {
 
     public void changePassword(String newPasswordHash) {
         if (newPasswordHash == null || newPasswordHash.isBlank())
-            throw new RuntimeException("Senha não pode ser vazia");
+            throw new DomainException("Password cannot be empty");
         this.passwordHash = newPasswordHash;
         this.updatedAt = LocalDateTime.now();
     }
