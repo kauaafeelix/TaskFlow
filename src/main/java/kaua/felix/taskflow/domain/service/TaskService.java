@@ -11,6 +11,8 @@ import kaua.felix.taskflow.domain.ports.in.TaskUseCase;
 import kaua.felix.taskflow.domain.ports.out.ProjectRepositoryPort;
 import kaua.felix.taskflow.domain.ports.out.TaskRepositoryPort;
 import kaua.felix.taskflow.domain.ports.out.UserRepositoryPort;
+import kaua.felix.taskflow.domain.shared.PageRequestDto;
+import kaua.felix.taskflow.domain.shared.PageResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -132,16 +134,15 @@ public class TaskService implements TaskUseCase {
     }
 
     @Override
-    public List<Task> findByProjectId(UUID projectId, UUID requesterId) {
-
+    public PageResponseDto<Task> findByProjectId(UUID projectId, UUID requesterId, PageRequestDto pageRequest) {
         Project project = projectRepositoryPort.findById(projectId)
-                .orElseThrow(()-> new DomainException("Project not found"));
+                .orElseThrow(() -> new DomainException("Project not found"));
 
-        if (!project.isMember(requesterId)){
+        if (!project.isMember(requesterId)) {
             throw new UnauthorizedOperationException("User is not a member of the project.");
         }
 
-        return taskRepositoryPort.findByProjectId(projectId);
+        return taskRepositoryPort.findByProjectId(projectId, pageRequest);
     }
 
     @Override

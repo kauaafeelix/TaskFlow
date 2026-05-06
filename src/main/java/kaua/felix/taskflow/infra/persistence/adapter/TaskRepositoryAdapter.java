@@ -4,6 +4,8 @@ import jakarta.transaction.Transactional;
 import kaua.felix.taskflow.domain.entity.Task;
 import kaua.felix.taskflow.domain.exception.DomainException;
 import kaua.felix.taskflow.domain.ports.out.TaskRepositoryPort;
+import kaua.felix.taskflow.domain.shared.PageRequestDto;
+import kaua.felix.taskflow.domain.shared.PageResponseDto;
 import kaua.felix.taskflow.infra.persistence.entity.ProjectJpaEntity;
 import kaua.felix.taskflow.infra.persistence.entity.TaskJpaEntity;
 import kaua.felix.taskflow.infra.persistence.mapper.CommentPersistenceMapper;
@@ -12,6 +14,8 @@ import kaua.felix.taskflow.infra.persistence.mapper.UserPersistenceMapper;
 import kaua.felix.taskflow.infra.persistence.repository.ProjectJpaRepository;
 import kaua.felix.taskflow.infra.persistence.repository.TaskJpaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -66,11 +70,22 @@ public class TaskRepositoryAdapter implements TaskRepositoryPort {
 
 
     @Override
-    public List<Task> findByProjectId(UUID projectId) {
-        return taskRepository.findByProject_Id(projectId)
-                .stream()
-                .map(taskMapper::toEntity)
-                .toList();
+    public PageResponseDto<Task> findByProjectId(UUID projectId, PageRequestDto pageRequest) {
+        PageRequest springPageRequest =
+                PageRequest.of(pageRequest.page(), pageRequest.size());
+
+        Page<TaskJpaEntity> page = taskRepository.findByProject_Id(projectId, springPageRequest);
+
+        return new PageResponseDto<>(
+                page.getContent().stream()
+                        .map(taskMapper::toEntity)
+                        .toList(),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.isLast()
+        );
     }
 
     @Override
