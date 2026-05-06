@@ -22,7 +22,17 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     @Override
     @Transactional
     public User save(User user) {
-        UserJpaEntity jpaEntity = userMapper.toJpa(user);
+        UserJpaEntity jpaEntity = userRepository.findById(user.getId())
+                .map(existing -> {
+                    existing.setName(user.getName());
+                    existing.setEmail(user.getEmail());
+                    existing.setPasswordHash(user.getPasswordHash());
+                    existing.setAvatarUrl(user.getAvatarUrl());
+                    existing.setUpdatedAt(user.getUpdatedAt());
+                    return existing;
+                })
+                .orElseGet(() -> userMapper.toJpa(user));
+
         UserJpaEntity saved = userRepository.save(jpaEntity);
         return userMapper.toEntity(saved);
     }
