@@ -41,7 +41,7 @@ public class TaskJpaEntity implements Persistable<UUID> {
     @Column(nullable = false)
     private TypePriority priority;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private LocalDate deadline;
 
     @ManyToOne

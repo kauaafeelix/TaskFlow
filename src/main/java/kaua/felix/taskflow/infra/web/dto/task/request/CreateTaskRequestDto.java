@@ -13,7 +13,6 @@ public record CreateTaskRequestDto(
         String description,
         @NotNull(message = "The priority field cannot be null")
         TypePriority priority,
-        @NotNull(message = "The deadline field cannot be null")
         LocalDate deadline,
         UUID assigneeId
 ) {
