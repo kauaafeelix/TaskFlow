@@ -5,6 +5,7 @@ API REST para gestão de projetos, tarefas, membros e comentários, com autentic
 ## Sumário
 - [Visão geral](#visão-geral)
 - [Stack e arquitetura](#stack-e-arquitetura)
+- [Diagramas](#diagramas)
 - [Funcionalidades](#funcionalidades)
 - [Pré-requisitos](#pré-requisitos)
 - [Configuração de ambiente](#configuração-de-ambiente)
@@ -39,6 +40,78 @@ Arquitetura em camadas com separação por domínio:
 - `infra/persistence`: entidades JPA, repositórios e adapters;
 - `infra/web`: controllers, DTOs e mapeadores;
 - `infra/security`: autenticação/autorização JWT.
+
+## Diagramas
+
+### 1) Arquitetura (alto nível)
+```mermaid
+flowchart LR
+    C[Cliente HTTP] --> W[Controllers - infra/web]
+    W --> U[Use Cases/Services - domain]
+    U --> P[Ports - domain]
+    P --> A[Adapters - infra/persistence]
+    A --> J[(PostgreSQL)]
+
+    W --> S[Security - JWT Filter/Config]
+    S --> T[JwtService]
+```
+
+### 2) Entidades principais
+```mermaid
+classDiagram
+    class User {
+      +UUID id
+      +String name
+      +String email
+      +String avatarUrl
+    }
+    class Project {
+      +UUID id
+      +String name
+      +ProjectStatus status
+    }
+    class ProjectMember {
+      +UUID id
+      +ProjectRole role
+    }
+    class Task {
+      +UUID id
+      +String title
+      +TaskStatus status
+      +TypePriority priority
+      +LocalDate deadline
+    }
+    class Comment {
+      +UUID id
+      +String content
+    }
+
+    User "1" --> "0..*" ProjectMember
+    Project "1" --> "1..*" ProjectMember
+    Project "1" --> "0..*" Task
+    Task "1" --> "0..*" Comment
+    Comment "1" --> "1" User : author
+    Task "1" --> "0..1" User : assignee
+```
+
+### 3) Fluxo de autenticação JWT
+```mermaid
+sequenceDiagram
+    participant U as Usuário
+    participant A as AuthController
+    participant S as AuthService
+    participant J as JwtService
+    participant API as Endpoints protegidos
+
+    U->>A: POST /api/auth/login
+    A->>S: autenticar credenciais
+    S->>J: gerar token JWT
+    J-->>U: token
+    U->>API: Request + Authorization Bearer token
+    API->>J: validar token
+    J-->>API: token válido
+    API-->>U: resposta autorizada
+```
 
 ## Funcionalidades
 - Autenticação:
