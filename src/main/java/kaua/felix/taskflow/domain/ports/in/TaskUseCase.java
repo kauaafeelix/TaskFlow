@@ -3,6 +3,9 @@ package kaua.felix.taskflow.domain.ports.in;
 import kaua.felix.taskflow.domain.entity.Task;
 import kaua.felix.taskflow.domain.entity.enuns.TaskStatus;
 import kaua.felix.taskflow.domain.entity.enuns.TypePriority;
+import kaua.felix.taskflow.domain.shared.PageRequestDto;
+import kaua.felix.taskflow.domain.shared.PageResponseDto;
+import kaua.felix.taskflow.domain.shared.TaskFilter;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -22,7 +25,7 @@ public interface TaskUseCase {
 
     Task findById (UUID taskId, UUID requesterId);
 
-    List<Task> findByProjectId (UUID projectId, UUID requesterId);
+    PageResponseDto<Task> findByProjectId(UUID projectId, UUID requesterId, TaskFilter filter, PageRequestDto pageRequest);
 
     void delete (UUID taskId, UUID requesterId);
 

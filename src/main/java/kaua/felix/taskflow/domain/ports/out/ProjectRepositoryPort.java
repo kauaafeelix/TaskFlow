@@ -1,8 +1,9 @@
 package kaua.felix.taskflow.domain.ports.out;
 
 import kaua.felix.taskflow.domain.entity.Project;
+import kaua.felix.taskflow.domain.shared.PageRequestDto;
+import kaua.felix.taskflow.domain.shared.PageResponseDto;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -12,7 +13,6 @@ public interface ProjectRepositoryPort {
 
     Optional<Project> findById(UUID id);
 
-    List<Project> findByMemberId(UUID userId);
-
+    PageResponseDto<Project> findByMemberId(UUID userId, PageRequestDto pageRequest);
 
 }

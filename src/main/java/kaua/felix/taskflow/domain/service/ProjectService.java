@@ -8,6 +8,8 @@ import kaua.felix.taskflow.domain.exception.UnauthorizedOperationException;
 import kaua.felix.taskflow.domain.ports.in.ProjectUseCase;
 import kaua.felix.taskflow.domain.ports.out.ProjectRepositoryPort;
 import kaua.felix.taskflow.domain.ports.out.UserRepositoryPort;
+import kaua.felix.taskflow.domain.shared.PageRequestDto;
+import kaua.felix.taskflow.domain.shared.PageResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -101,8 +103,7 @@ public class ProjectService implements ProjectUseCase {
     }
 
     @Override
-    public List<Project> findByMemberId(UUID requesterId) {
-
-        return projectRepository.findByMemberId(requesterId);
+    public PageResponseDto<Project> findByMemberId(UUID requesterId, PageRequestDto pageRequest) {
+        return projectRepository.findByMemberId(requesterId, pageRequest);
     }
 }

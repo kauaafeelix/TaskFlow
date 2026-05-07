@@ -1,11 +1,20 @@
 package kaua.felix.taskflow.infra.web.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kaua.felix.taskflow.domain.entity.Project;
 import kaua.felix.taskflow.domain.entity.Task;
+import kaua.felix.taskflow.domain.entity.enuns.TaskStatus;
+import kaua.felix.taskflow.domain.entity.enuns.TypePriority;
 import kaua.felix.taskflow.domain.ports.in.ProjectUseCase;
 import kaua.felix.taskflow.domain.ports.in.TaskUseCase;
 import kaua.felix.taskflow.domain.ports.in.UserUseCase;
+import kaua.felix.taskflow.domain.shared.PageRequestDto;
+import kaua.felix.taskflow.domain.shared.PageResponseDto;
+import kaua.felix.taskflow.domain.shared.TaskFilter;
 import kaua.felix.taskflow.infra.web.dto.project.request.AddMemberRequestDto;
 import kaua.felix.taskflow.infra.web.dto.project.request.CreateProjectRequestDto;
 import kaua.felix.taskflow.infra.web.dto.project.request.RemoveMemberRequestDto;
@@ -23,12 +32,14 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/projects")
+@Tag(name = "Projects", description = "Endpoints for project management")
 public class ProjectController {
 
     private final ProjectUseCase projectUseCase;
@@ -37,6 +48,11 @@ public class ProjectController {
     private final TaskWebMapper taskWebMapper;
     private final UserUseCase userUseCase;
 
+    @Operation(summary = "Create project", description = "Creates a new project for the authenticated user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Project created successfully"),
+            @ApiResponse(responseCode = "422", description = "Validation error")
+    })
     @PostMapping
     public ResponseEntity<ProjectResponseDto> create (
             @Valid @RequestBody CreateProjectRequestDto request,
@@ -51,6 +67,12 @@ public class ProjectController {
 
     }
 
+    @Operation(summary = "Create task", description = "Creates a new task in the specified project")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Task created successfully"),
+            @ApiResponse(responseCode = "403", description = "User is not a member of the project"),
+            @ApiResponse(responseCode = "422", description = "Validation error")
+    })
     @PostMapping("/{projectId}/tasks")
     public ResponseEntity<TaskResponseDto> createTask (
 
@@ -66,6 +88,12 @@ public class ProjectController {
 
     }
 
+    @Operation(summary = "Update project", description = "Updates name and description of a project")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Project updated successfully"),
+            @ApiResponse(responseCode = "403", description = "User does not have permission to edit"),
+            @ApiResponse(responseCode = "422", description = "Validation error")
+    })
     @PutMapping("/{id}")
     public ResponseEntity<ProjectResponseDto> update (
             @PathVariable UUID id,
@@ -79,6 +107,12 @@ public class ProjectController {
 
     }
 
+    @Operation(summary = "Get project by id", description = "Returns project details with members and tasks")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Project found"),
+            @ApiResponse(responseCode = "403", description = "User is not a member of the project"),
+            @ApiResponse(responseCode = "400", description = "Project not found")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<ProjectDetailResponseDto> findById(
             @PathVariable UUID id,
@@ -86,37 +120,72 @@ public class ProjectController {
     ) {
         UUID requesterId = userUseCase.findByEmail(userDetails.getUsername()).getId();
         Project project = projectUseCase.findById(id, requesterId);
-        List<Task> tasks = taskUseCase.findByProjectId(id, requesterId);
-        return ResponseEntity.ok(projectWebMapper.toDetailDto(project, tasks));
+        PageResponseDto<Task> tasks = taskUseCase.findByProjectId(id, requesterId, new TaskFilter(null, null, null), new PageRequestDto(0, 100));
+        return ResponseEntity.ok(projectWebMapper.toDetailDto(project, tasks.content()));
     }
 
+    @Operation(summary = "List project tasks", description = "Returns paginated tasks with optional filters")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Tasks listed successfully"),
+            @ApiResponse(responseCode = "403", description = "User is not a member of the project")
+    })
     @GetMapping("/{projectId}/tasks")
-    public ResponseEntity<List<TaskResponseDto>> findByProjectId (
+    public ResponseEntity<PageResponseDto<TaskResponseDto>> findByProjectId(
             @PathVariable UUID projectId,
-            @AuthenticationPrincipal UserDetails userDetails
-    ){
-
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) TaskStatus status,
+            @RequestParam(required = false) TypePriority priority,
+            @RequestParam(required = false) LocalDate deadline
+    ) {
         UUID requesterId = userUseCase.findByEmail(userDetails.getUsername()).getId();
-        List<Task> tasks = taskUseCase.findByProjectId(projectId, requesterId);
+        PageRequestDto pageRequest = new PageRequestDto(page, size);
+        TaskFilter filter = new TaskFilter(status, priority, deadline);
+        PageResponseDto<Task> tasks = taskUseCase.findByProjectId(projectId, requesterId, filter, pageRequest);
 
-        return ResponseEntity.ok(tasks.stream()
-                .map(taskWebMapper::toDto)
-                .toList());
+        return ResponseEntity.ok(new PageResponseDto<>(
+                tasks.content().stream()
+                        .map(taskWebMapper::toDto)
+                        .toList(),
+                tasks.currentPage(),
+                tasks.pageSize(),
+                tasks.totalElements(),
+                tasks.totalPages(),
+                tasks.last()
+        ));
     }
 
+    @Operation(summary = "List projects", description = "Returns paginated projects where the user is a member")
+    @ApiResponse(responseCode = "200", description = "Projects listed successfully")
     @GetMapping
-    public ResponseEntity<List<ProjectResponseDto>> findByMemberId (
-            @AuthenticationPrincipal UserDetails userDetails
-    ){
-
+    public ResponseEntity<PageResponseDto<ProjectResponseDto>> findByMemberId(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
         UUID requesterId = userUseCase.findByEmail(userDetails.getUsername()).getId();
-        List<Project> projects = projectUseCase.findByMemberId(requesterId);
+        PageRequestDto pageRequest = new PageRequestDto(page, size);
+        PageResponseDto<Project> projects = projectUseCase.findByMemberId(requesterId, pageRequest);
 
-        return ResponseEntity.ok(projects.stream()
-                .map(projectWebMapper::toDto)
-                .toList());
+        return ResponseEntity.ok(new PageResponseDto<>(
+                projects.content().stream()
+                        .map(projectWebMapper::toDto)
+                        .toList(),
+                projects.currentPage(),
+                projects.pageSize(),
+                projects.totalElements(),
+                projects.totalPages(),
+                projects.last()
+        ));
     }
 
+    @Operation(summary = "Add member", description = "Adds a new member to the project by email")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Member added successfully"),
+            @ApiResponse(responseCode = "400", description = "User is already a member"),
+            @ApiResponse(responseCode = "403", description = "Only the owner can add members")
+    })
     @PostMapping("/{id}/members")
     public ResponseEntity<ProjectResponseDto> addMember(
             @PathVariable UUID id,
@@ -129,6 +198,11 @@ public class ProjectController {
         return ResponseEntity.ok(projectWebMapper.toDto(project));
     }
 
+    @Operation(summary = "Remove member", description = "Removes a member from the project by email")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Member removed successfully"),
+            @ApiResponse(responseCode = "403", description = "Only the owner can remove members")
+    })
     @DeleteMapping("/{id}/members")
     public ResponseEntity<Void> removeMember(
             @PathVariable UUID id,
@@ -141,6 +215,12 @@ public class ProjectController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Archive project", description = "Archives the specified project")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Project archived successfully"),
+            @ApiResponse(responseCode = "403", description = "Only the owner can archive the project"),
+            @ApiResponse(responseCode = "400", description = "Project is already archived")
+    })
     @PatchMapping("/{id}/archive")
     public ResponseEntity<ProjectResponseDto> archive (
             @PathVariable UUID id,
