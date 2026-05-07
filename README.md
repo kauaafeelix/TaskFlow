@@ -88,7 +88,14 @@ docker compose up -d db
 3. Run the application:
 
 ```bash
-sh mvnw spring-boot:run
+./mvnw spring-boot:run
+```
+
+If the script is not executable, run:
+
+```bash
+chmod +x mvnw
+./mvnw spring-boot:run
 ```
 
 Application base URL: `http://localhost:8080`
