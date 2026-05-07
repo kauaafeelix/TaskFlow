@@ -3,11 +3,14 @@ package kaua.felix.taskflow.infra.web.controller;
 import jakarta.validation.Valid;
 import kaua.felix.taskflow.domain.entity.Project;
 import kaua.felix.taskflow.domain.entity.Task;
+import kaua.felix.taskflow.domain.entity.enuns.TaskStatus;
+import kaua.felix.taskflow.domain.entity.enuns.TypePriority;
 import kaua.felix.taskflow.domain.ports.in.ProjectUseCase;
 import kaua.felix.taskflow.domain.ports.in.TaskUseCase;
 import kaua.felix.taskflow.domain.ports.in.UserUseCase;
 import kaua.felix.taskflow.domain.shared.PageRequestDto;
 import kaua.felix.taskflow.domain.shared.PageResponseDto;
+import kaua.felix.taskflow.domain.shared.TaskFilter;
 import kaua.felix.taskflow.infra.web.dto.project.request.AddMemberRequestDto;
 import kaua.felix.taskflow.infra.web.dto.project.request.CreateProjectRequestDto;
 import kaua.felix.taskflow.infra.web.dto.project.request.RemoveMemberRequestDto;
@@ -25,6 +28,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -88,20 +92,24 @@ public class ProjectController {
     ) {
         UUID requesterId = userUseCase.findByEmail(userDetails.getUsername()).getId();
         Project project = projectUseCase.findById(id, requesterId);
-        PageResponseDto<Task> tasks = taskUseCase.findByProjectId(id, requesterId, new PageRequestDto(0, 100));
+        PageResponseDto<Task> tasks = taskUseCase.findByProjectId(id, requesterId, new TaskFilter(null, null, null), new PageRequestDto(0, 100));
         return ResponseEntity.ok(projectWebMapper.toDetailDto(project, tasks.content()));
-    }
+    }   
 
     @GetMapping("/{projectId}/tasks")
     public ResponseEntity<PageResponseDto<TaskResponseDto>> findByProjectId(
             @PathVariable UUID projectId,
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) TaskStatus status,
+            @RequestParam(required = false) TypePriority priority,
+            @RequestParam(required = false) LocalDate deadline
     ) {
         UUID requesterId = userUseCase.findByEmail(userDetails.getUsername()).getId();
         PageRequestDto pageRequest = new PageRequestDto(page, size);
-        PageResponseDto<Task> tasks = taskUseCase.findByProjectId(projectId, requesterId, pageRequest);
+        TaskFilter filter = new TaskFilter(status, priority, deadline);
+        PageResponseDto<Task> tasks = taskUseCase.findByProjectId(projectId, requesterId, filter, pageRequest);
 
         return ResponseEntity.ok(new PageResponseDto<>(
                 tasks.content().stream()
