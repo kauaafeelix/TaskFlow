@@ -107,7 +107,7 @@ Application base URL: `http://localhost:8080`
 
 ## Environment Variables
 
-Template file: `/home/runner/work/TaskFlow/TaskFlow/.env.example`
+Template file: `.env.example`
 
 ```env
 DB_URL=your_URL
