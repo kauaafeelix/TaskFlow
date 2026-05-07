@@ -1,205 +1,142 @@
 # TaskFlow API
 
-API REST para gestão de projetos, tarefas, membros e comentários, com autenticação JWT.
+![Java](https://img.shields.io/badge/Java-21-007396?logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.5-6DB33F?logo=springboot&logoColor=white)
+![Spring Security](https://img.shields.io/badge/Spring%20Security-JWT-6DB33F?logo=springsecurity&logoColor=white)
+![JPA](https://img.shields.io/badge/JPA-Hibernate-59666C)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker&logoColor=white)
+![OpenAPI](https://img.shields.io/badge/OpenAPI-Swagger-85EA2D?logo=swagger&logoColor=black)
 
-## Sumário
-- [Visão geral](#visão-geral)
-- [Stack e arquitetura](#stack-e-arquitetura)
-- [Diagramas](#diagramas)
-- [Funcionalidades](#funcionalidades)
-- [Pré-requisitos](#pré-requisitos)
-- [Configuração de ambiente](#configuração-de-ambiente)
-- [Como executar](#como-executar)
-- [Documentação da API (Swagger)](#documentação-da-api-swagger)
-- [Autenticação](#autenticação)
-- [Endpoints principais](#endpoints-principais)
-- [Regras de negócio importantes](#regras-de-negócio-importantes)
-- [Estrutura de pastas](#estrutura-de-pastas)
-- [Testes](#testes)
+TaskFlow is a **task and project management REST API** built with **Hexagonal Architecture (Ports & Adapters)**.
+It provides JWT-based authentication, project and member management, task workflows, and task comments.
 
-## Visão geral
-O TaskFlow organiza trabalho em projetos com membros e papéis, permitindo:
-- cadastro e login de usuários;
-- criação e gestão de projetos;
-- gestão de membros por papel (OWNER, MEMBER, VIEWER);
-- criação e acompanhamento de tarefas com prioridade, prazo, responsável e status;
-- comentários em tarefas.
+## Table of Contents
 
-## Stack e arquitetura
-- **Java 21**
-- **Spring Boot 4**
-- **Spring Web MVC**
-- **Spring Security + JWT**
-- **Spring Data JPA**
-- **PostgreSQL**
-- **Swagger/OpenAPI (springdoc)**
-- **Testcontainers (testes)**
+- [Project Description](#project-description)
+- [Architecture Overview](#architecture-overview)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+  - [Run Locally (without Docker)](#run-locally-without-docker)
+  - [Run with Docker](#run-with-docker)
+- [Environment Variables](#environment-variables)
+- [API Documentation (Swagger/OpenAPI)](#api-documentation-swaggeropenapi)
+- [Endpoints by Controller](#endpoints-by-controller)
 
-Arquitetura em camadas com separação por domínio:
-- `domain`: entidades, regras e casos de uso;
-- `infra/persistence`: entidades JPA, repositórios e adapters;
-- `infra/web`: controllers, DTOs e mapeadores;
-- `infra/security`: autenticação/autorização JWT.
+## Project Description
 
-## Diagramas
+TaskFlow centralizes project execution with:
 
-### 1) Arquitetura (alto nível)
-```mermaid
-flowchart LR
-    C[Cliente HTTP] --> W[Controllers - infra/web]
-    W --> U[Use Cases/Services - domain]
-    U --> P[Ports - domain]
-    P --> A[Adapters - infra/persistence]
-    A --> J[(PostgreSQL)]
+- user registration and authentication
+- project creation and lifecycle management
+- role-based member management in projects
+- task creation, assignment, status transitions, and filtering
+- comments on tasks
 
-    W --> S[Security - JWT Filter/Config]
-    S --> T[JwtService]
+## Architecture Overview
+
+TaskFlow follows **Hexagonal Architecture**:
+
+- **Domain (Core):** entities, business rules, and use cases
+- **Inbound Ports:** contracts used by controllers (`domain/ports/in`)
+- **Outbound Ports:** contracts for external resources (`domain/ports/out`)
+- **Adapters:** implementations for web, persistence, and security (`infra/...`)
+
+```text
+src/main/java/kaua/felix/taskflow
+├── domain
+│   ├── entity
+│   ├── ports
+│   │   ├── in
+│   │   └── out
+│   └── service
+└── infra
+    ├── web          (REST controllers, DTOs, mappers)
+    ├── persistence  (JPA entities, repositories, adapters)
+    ├── security     (JWT auth and security config)
+    └── config       (OpenAPI/Swagger config)
 ```
 
-### 2) Entidades principais
-```mermaid
-classDiagram
-    class User {
-      +UUID id
-      +String name
-      +String email
-      +String avatarUrl
-    }
-    class Project {
-      +UUID id
-      +String name
-      +ProjectStatus status
-    }
-    class ProjectMember {
-      +UUID id
-      +ProjectRole role
-    }
-    class Task {
-      +UUID id
-      +String title
-      +TaskStatus status
-      +TypePriority priority
-      +LocalDate deadline
-    }
-    class Comment {
-      +UUID id
-      +String content
-    }
+## Tech Stack
 
-    User "1" --> "0..*" ProjectMember
-    Project "1" --> "1..*" ProjectMember
-    Project "1" --> "0..*" Task
-    Task "1" --> "0..*" Comment
-    Comment "1" --> "1" User : author
-    Task "1" --> "0..1" User : assignee
-```
+- Java 21
+- Spring Boot
+- Spring Security + JWT
+- JPA/Hibernate
+- PostgreSQL
+- Docker + Docker Compose
+- Swagger/OpenAPI (springdoc)
+- Maven Wrapper
 
-### 3) Fluxo de autenticação JWT
-```mermaid
-sequenceDiagram
-    participant U as Usuário
-    participant A as AuthController
-    participant S as AuthService
-    participant J as JwtService
-    participant API as Endpoints protegidos
+## Getting Started
 
-    U->>A: POST /api/auth/login
-    A->>S: autenticar credenciais
-    S->>J: gerar token JWT
-    J-->>U: token
-    U->>API: Request + Authorization Bearer token
-    API->>J: validar token
-    J-->>API: token válido
-    API-->>U: resposta autorizada
-```
+### Prerequisites
 
-## Funcionalidades
-- Autenticação:
-  - `POST /api/auth/register`
-  - `POST /api/auth/login`
-- Usuário autenticado:
-  - consultar perfil
-  - atualizar perfil
-  - trocar senha
-- Projetos:
-  - criar, atualizar, listar, detalhar e arquivar
-  - adicionar e remover membros
-  - listar tarefas de um projeto com filtros
-- Tarefas:
-  - criar (via projeto), atualizar, consultar e remover
-  - alterar status
-  - atribuir responsável
-  - comentar e remover comentário
-
-## Pré-requisitos
 - JDK 21
-- Docker e Docker Compose (para banco e/ou execução em container)
+- Docker & Docker Compose (for containerized execution)
 
-## Configuração de ambiente
-Crie um arquivo `.env` (execução local) com base em `.env.example`:
+### Run Locally (without Docker)
 
-```env
-DB_URL=jdbc:postgresql://localhost:5432/taskflow
-DB_USERNAME=postgres
-DB_PASSWORD=postgres
-JWT_SECRET=sua_chave_com_no_minimo_32_caracteres
-JWT_EXPIRATION=86400000
-```
+1. Start PostgreSQL (example with Docker):
 
-> `JWT_SECRET` precisa ter pelo menos 32 bytes para HS256.
-
-Para Docker Compose, crie também `.env.docker` (referenciado no `docker-compose.yml`) com as mesmas variáveis.
-
-## Como executar
-
-### 1) Banco de dados com Docker
 ```bash
 docker compose up -d db
 ```
 
-### 2) Aplicação local (sem container)
+2. Create `.env` based on `.env.example`.
+
+3. Run the application:
+
 ```bash
-./mvnw spring-boot:run
+sh mvnw spring-boot:run
 ```
 
-Se o script não tiver permissão de execução:
-```bash
-chmod +x mvnw
-./mvnw spring-boot:run
-```
+Application base URL: `http://localhost:8080`
 
-### 3) Aplicação + banco com Docker Compose
+### Run with Docker
+
+1. Create `.env.docker` using the same variables as `.env.example`.
+
+2. Run full stack:
+
 ```bash
 docker compose up --build
 ```
 
-A API sobe em `http://localhost:8080`.
+Application base URL: `http://localhost:8080`
 
-## Documentação da API (Swagger)
-- UI: `http://localhost:8080/swagger-ui.html`
+## Environment Variables
+
+Template file: `/home/runner/work/TaskFlow/TaskFlow/.env.example`
+
+```env
+DB_URL=your_URL
+DB_USERNAME=your_Username
+DB_PASSWORD=your_Password
+JWT_SECRET=your_SecretKey # minimum 32 characters required for HS256
+JWT_EXPIRATION=your_ExpirationTime
+```
+
+## API Documentation (Swagger/OpenAPI)
+
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
-## Autenticação
-- Rotas públicas:
-  - `/api/auth/**`
-  - `/swagger-ui/**`
-  - `/v3/api-docs/**`
-- Demais rotas exigem token JWT.
-- Envie no header:
-  - `Authorization: Bearer <seu_token>`
+## Endpoints by Controller
 
-## Endpoints principais
+### AuthController (`/api/auth`)
 
-### Auth
-- `POST /api/auth/register`
 - `POST /api/auth/login`
+- `POST /api/auth/register`
 
-### Users
+### UserController (`/api/users`)
+
 - `GET /api/users/me`
 - `PUT /api/users/me`
 - `PUT /api/users/me/password`
 
-### Projects
+### ProjectController (`/api/projects`)
+
 - `POST /api/projects`
 - `GET /api/projects`
 - `GET /api/projects/{id}`
@@ -207,10 +144,19 @@ A API sobe em `http://localhost:8080`.
 - `PATCH /api/projects/{id}/archive`
 - `POST /api/projects/{id}/members`
 - `DELETE /api/projects/{id}/members`
-- `GET /api/projects/{projectId}/tasks?page=0&size=10&status=&priority=&deadline=YYYY-MM-DD`
+- `GET /api/projects/{projectId}/tasks`
 - `POST /api/projects/{projectId}/tasks`
 
-### Tasks
+Task list query params:
+
+- `page` (default `0`)
+- `size` (default `10`)
+- `status` (optional)
+- `priority` (optional)
+- `deadline` (optional, `YYYY-MM-DD`)
+
+### TaskController (`/api/tasks`)
+
 - `GET /api/tasks/{id}`
 - `PUT /api/tasks/{id}`
 - `PATCH /api/tasks/{id}/status`
@@ -218,47 +164,3 @@ A API sobe em `http://localhost:8080`.
 - `DELETE /api/tasks/{id}`
 - `POST /api/tasks/{id}/comments`
 - `DELETE /api/tasks/{id}/comments/{commentId}`
-
-## Regras de negócio importantes
-- **Papéis no projeto**
-  - `OWNER`: controle total (inclui membros e arquivamento)
-  - `MEMBER`: pode editar/criar tarefas e editar projeto
-  - `VIEWER`: somente leitura
-- **Membros**
-  - só `OWNER` adiciona/remove membros;
-  - `OWNER` não pode remover a si mesmo.
-- **Tarefas**
-  - não permite prazo no passado ao criar;
-  - tarefas `DONE`/`CANCELLED` não podem ser editadas nem atribuídas;
-  - transições de status válidas:
-    - `TODO -> IN_PROGRESS | CANCELLED`
-    - `IN_PROGRESS -> IN_REVIEW | TODO | CANCELLED`
-    - `IN_REVIEW -> DONE | IN_PROGRESS`
-    - `DONE` e `CANCELLED` não transitam.
-- **Comentários**
-  - apenas autor remove o próprio comentário.
-
-## Estrutura de pastas
-```text
-src/
-  main/
-    java/kaua/felix/taskflow/
-      domain/
-      infra/
-        config/
-        persistence/
-        security/
-        web/
-    resources/
-      application.properties
-  test/
-    java/kaua/felix/taskflow/
-```
-
-## Testes
-Executar:
-```bash
-./mvnw test
-```
-
-Os testes usam **Testcontainers** para PostgreSQL.
