@@ -55,7 +55,7 @@ public class TaskRepositoryAdapter implements TaskRepositoryPort {
                     existing.getComments().addAll(
                             task.getComments().stream()
                                     .map(comment -> commentMapper.toJpa(comment, existing))
-                                    .collect(Collectors.toList())
+                                    .toList()
                     );
                     return existing;
                 })

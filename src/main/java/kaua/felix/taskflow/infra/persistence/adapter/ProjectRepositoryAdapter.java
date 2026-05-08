@@ -40,7 +40,7 @@ public class ProjectRepositoryAdapter implements ProjectRepositoryPort {
                     existing.getMembers().addAll(
                             project.getMembers().stream()
                                     .map(member -> projectMemberMapper.toJpa(member, existing))
-                                    .collect(Collectors.toList())
+                                    .toList()
                     );
                     return existing;
                 })
